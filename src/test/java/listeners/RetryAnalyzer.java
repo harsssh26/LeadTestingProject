@@ -8,6 +8,11 @@ public class RetryAnalyzer implements IRetryAnalyzer {
 
     @Override
     public boolean retry(ITestResult result) {
+        String methodName=result.getMethod().getMethodName();
+        if(methodName.equals("testValidLogin"))// Skip Retry for testValidLogin
+        {
+            return false;
+        }
         if (retryCount < maxRetryCount) {
             retryCount++;
             System.out.println("Retrying test: " + result.getMethod().getMethodName() + " | Attempt: " + (retryCount + 1));

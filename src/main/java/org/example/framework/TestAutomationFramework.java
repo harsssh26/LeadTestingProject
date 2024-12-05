@@ -14,10 +14,11 @@ import java.time.Duration;
 
 public class TestAutomationFramework {
 
-    private static final ThreadLocal<WebDriver> driver = ThreadLocal.withInitial(() -> {
+    private static final ThreadLocal<WebDriver> driver = ThreadLocal.withInitial(() ->
+    {
         WebDriverManager.chromedriver().setup();
         ChromeOptions options = new ChromeOptions();
-      options.addArguments("--headless");  // Use headless mode
+        options.addArguments("--headless");  // Use headless mode
         options.addArguments("--disable-gpu");  // Disable GPU for compatibility
         options.addArguments("--window-size=1920,1080");  // Set a fixed window size
         options.addArguments("--disable-notifications");
@@ -53,7 +54,8 @@ public class TestAutomationFramework {
         if (driver instanceof TakesScreenshot) {
             File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
             try {
-                String path = "screenshots/" + testName + ".png";
+                String timestamp = new java.text.SimpleDateFormat("yyyyMMddHHmmss").format(new java.util.Date());
+                String path = "screenshots/" + testName + "_" + timestamp + ".png";
                 Files.createDirectories(Paths.get("screenshots"));
                 Files.copy(screenshot.toPath(), Paths.get(path));
                 System.out.println("Screenshot saved: " + path);
@@ -62,4 +64,5 @@ public class TestAutomationFramework {
             }
         }
     }
+
 }

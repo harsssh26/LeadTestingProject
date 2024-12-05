@@ -31,6 +31,9 @@ public class Utility {
         }
     }
 
+
+
+
     public void enterText(By locator, String text) {
         WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
         element.clear();
@@ -52,7 +55,8 @@ public class Utility {
         js.executeScript("arguments[0].click();", element);
     }
 
-    public void jsClick(WebElement element) {
+    public void jsClick(WebElement element)
+    {
         js.executeScript("arguments[0].click();", element);
     }
 
