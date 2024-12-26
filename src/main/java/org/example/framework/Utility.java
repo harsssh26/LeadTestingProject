@@ -83,6 +83,7 @@ public class Utility {
         try {
             return wait.until(ExpectedConditions.visibilityOfElementLocated(locator)).isDisplayed();
         } catch (TimeoutException e) {
+            System.out.println("Unable to locate element with locator "+locator);
             return false;
         }
     }

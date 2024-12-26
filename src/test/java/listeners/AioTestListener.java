@@ -1,162 +1,177 @@
 package listeners;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.*;
-import org.example.framework.TestAutomationFramework;
 import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.example.framework.TestAutomationFramework;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class AioTestListener implements ITestListener {
 
-    private static final String UPLOAD_RESULTS_ENDPOINT = "https://tcms.aiojiraapps.com/aio-tcms/api/v1/project/SCRUM/testcycle/SCRUM-CY-Adhoc/import/results?type=TestNG";
-    private static final String MEDIA_UPLOAD_ENDPOINT_TEMPLATE = "https://tcms.aiojiraapps.com/aio-tcms/api/v1/project/SCRUM//testcycle/SCRUM-CY-Adhoc/testrun/{testRunId}/attachment";
-    private static final String AUTH_TOKEN = "AioAuth NDAwYzc4NTQtNWNmNy0zMDU3LWIzYWItYTdhOGU3NzFiNTBmLmNiMzEzMTM5LTkzNGItNGY3OC1hZTUzLTc5ZDRjZDM5YmIzYQ==";
-    private static final String FINAL_RESULTS_FILE_PATH = "target/surefire-reports/testng-results.xml";
+    private static final String BASE_URL = "https://tcms.aiojiraapps.com/aio-tcms/api/v1/project";
+    private static final String CREATE_RUN_ENDPOINT_TEMPLATE = BASE_URL + "/SCRUM/testcycle/{testCycleId}/testcase/{testCaseId}/testrun?createNewRun=true";
+    private static final String UPLOAD_ATTACHMENT_ENDPOINT_TEMPLATE = BASE_URL + "/{jiraProjectId}/testcycle/{testCycleId}/testcase/{testCaseId}/attachment";
+    private static final String AUTH_TOKEN = "AioAuth ZGE4NmMxYjctMjM2MC0zNWRhLTgzNDMtMWJmNzNiYzdlYmJkLjlhZDA4MWM1LWNlODMtNGNlYS1hOTI3LWFiOWMxMTc3OWYxMg==";
 
-    private BufferedWriter writer;
-    private final Map<String, Integer> runIdMap = new HashMap<>();
-    private final Map<String, File> failedTestScreenshots = new HashMap<>();
+    private final Map<String, String> testCaseMap = new HashMap<>();
+    private final String testCycleId = "SCRUM-CY-Adhoc";
+    private final String jiraProjectId = "SCRUM";
 
-    private OkHttpClient createHttpClient() {
-        return new OkHttpClient.Builder()
-                .connectTimeout(60, TimeUnit.SECONDS)  // Increased connection timeout
-                .readTimeout(60, TimeUnit.SECONDS)     // Increased read timeout
-                .writeTimeout(60, TimeUnit.SECONDS)    // Increased write timeout
-                .build();
+    public AioTestListener() {
+        // Map test methods to test case IDs in AIO
+        testCaseMap.put("testValidLogin", "SCRUM-TC-1");
+        testCaseMap.put("testInvalidLogin", "SCRUM-TC-2");
+        testCaseMap.put("testNoCredentialLogin", "SCRUM-TC-3");
+        testCaseMap.put("testCreateNewLead", "SCRUM-TC-4");
     }
 
     @Override
-    public void onStart(ITestContext context) {
-        new File("target/surefire-reports").mkdirs();
-        try {
-            writer = new BufferedWriter(new FileWriter(FINAL_RESULTS_FILE_PATH));
-            writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-            writer.write("<testng-results ignored=\"0\" total=\"0\" passed=\"0\" failed=\"0\" skipped=\"0\">\n");
-            writer.write("<suite>\n");
-            writer.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
+    public void onTestSuccess(ITestResult result) {
+        String testCaseId = testCaseMap.get(result.getMethod().getMethodName());
+        if (testCaseId != null) {
+            createRunInAio(testCaseId, "Passed", "Test passed successfully");
         }
     }
 
     @Override
     public void onTestFailure(ITestResult result) {
-        String testName = result.getMethod().getMethodName();
-        TestAutomationFramework.captureScreenshot(testName);
+        String testCaseId = testCaseMap.get(result.getMethod().getMethodName());
+        if (testCaseId != null) {
+            // Create a failed test run
+            createRunInAio(testCaseId, "Failed", "Test failed: " + result.getThrowable().getMessage());
 
-        File screenshotFile = new File("screenshots/" + testName + ".png");
-        if (screenshotFile.exists()) {
-            failedTestScreenshots.put(testName, screenshotFile);
-        } else {
-            System.err.println("Screenshot not found: " + screenshotFile.getAbsolutePath());
+            // Capture and upload screenshot
+            int retryCount = result.getMethod().getCurrentInvocationCount();
+            String screenshotPath = TestAutomationFramework.captureScreenshot(result.getMethod().getMethodName(), retryCount);
+
+            if (screenshotPath != null) {
+                uploadScreenshotToAio(testCaseId, screenshotPath);
+            } else {
+                System.err.println("Failed to capture screenshot for Test Case: " + testCaseId);
+            }
         }
     }
 
     @Override
-    public void onFinish(ITestContext context) {
-        try {
-            writer.close();
+    public void onTestSkipped(ITestResult result) {
+        String testCaseId = testCaseMap.get(result.getMethod().getMethodName());
+        if (testCaseId != null) {
+            createRunInAio(testCaseId, "Blocked", "Test skipped due to: " + result.getThrowable().getMessage());
+        }
+    }
 
-            String jsonResponse = uploadTestResults(new File(FINAL_RESULTS_FILE_PATH));
-            if (jsonResponse != null) {
-                populateRunIdMap(jsonResponse);
-                for (Map.Entry<String, File> entry : failedTestScreenshots.entrySet()) {
-                    uploadScreenshot(entry.getKey(), entry.getValue());
+    private void createRunInAio(String testCaseId, String status, String comment) {
+        String endpoint = CREATE_RUN_ENDPOINT_TEMPLATE
+                .replace("{testCycleId}", testCycleId)
+                .replace("{testCaseId}", testCaseId);
+
+        OkHttpClient client = createHttpClient();
+
+        // Prepare request body
+        Map<String, Object> bodyMap = new HashMap<>();
+        bodyMap.put("testCaseKey", testCaseId);
+        bodyMap.put("testCaseVersion", 1);
+        bodyMap.put("testRunStatus", status);
+        bodyMap.put("effort", 60);
+        bodyMap.put("isAutomated", true);
+
+        if (!"Passed".equalsIgnoreCase(status)) {
+            String trimmedComment = comment.split("\n")[0]; // Extract only the first line of the comment
+            bodyMap.put("comments", new String[]{trimmedComment});
+        }
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            String requestBody = objectMapper.writeValueAsString(bodyMap);
+
+            RequestBody body = RequestBody.create(requestBody, MediaType.parse("application/json"));
+            Request request = new Request.Builder()
+                    .url(endpoint)
+                    .addHeader("Authorization", AUTH_TOKEN)
+                    .post(body)
+                    .build();
+
+            try (Response response = client.newCall(request).execute()) {
+                if (response.isSuccessful()) {
+                    System.out.println("Test run created successfully for Test Case: " + testCaseId + " with status: " + status);
+                } else {
+                    System.err.println("Failed to create test run for Test Case: " + testCaseId);
+                    System.err.println("Response Code: " + response.code());
+                    System.err.println("Response Body: " + response.body().string());
                 }
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
+            System.err.println("Error creating test run for Test Case: " + testCaseId);
             e.printStackTrace();
         }
     }
 
-    private String uploadTestResults(File testResultsFile) {
+
+    private void uploadScreenshotToAio(String testCaseId, String filePath) {
+        String endpoint = UPLOAD_ATTACHMENT_ENDPOINT_TEMPLATE
+                .replace("{jiraProjectId}", jiraProjectId)
+                .replace("{testCycleId}", testCycleId)
+                .replace("{testCaseId}", testCaseId);
+
+        File file = new File(filePath);
+        if (!file.exists()) {
+            System.err.println("Screenshot file not found: " + filePath);
+            return;
+        }
+
+        System.out.println("Attempting to upload screenshot: " + filePath + " for Test Case: " + testCaseId);
+
         OkHttpClient client = createHttpClient();
-        MultipartBody.Builder builder = new MultipartBody.Builder()
+
+        RequestBody fileBody = RequestBody.create(file, MediaType.parse("image/png"));
+        MultipartBody requestBody = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
-                .addFormDataPart("file", testResultsFile.getName(),
-                        RequestBody.create(testResultsFile, MediaType.parse("application/xml")));
+                .addFormDataPart("file", file.getName(), fileBody)
+                .build();
+
         Request request = new Request.Builder()
-                .url(UPLOAD_RESULTS_ENDPOINT)
+                .url(endpoint)
                 .addHeader("Authorization", AUTH_TOKEN)
-                .post(builder.build())
+                .post(requestBody)
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
             if (response.isSuccessful()) {
-                return response.body().string();
+                System.out.println("Screenshot uploaded successfully for Test Case: " + testCaseId);
+                System.out.println("Response Body: " + response.body().string());
             } else {
-                logErrorDetails(response);
+                System.err.println("Failed to upload screenshot for Test Case: " + testCaseId);
+                System.err.println("Response Code: " + response.code());
+                System.err.println("Response Body: " + response.body().string());
             }
         } catch (IOException e) {
-            System.err.println("Failed to upload test results due to: " + e.getMessage());
-        }
-        return null;
-    }
-
-    private void populateRunIdMap(String jsonResponse) {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            Map<String, Object> responseMap = mapper.readValue(jsonResponse, Map.class);
-            Map<String, Map<String, Object>> processedData = (Map<String, Map<String, Object>>) responseMap.get("processedData");
-            if (processedData != null) {
-                for (Map.Entry<String, Map<String, Object>> entry : processedData.entrySet()) {
-                    String testName = (String) entry.getValue().get("name");
-                    List<Integer> runIds = (List<Integer>) entry.getValue().get("runId");
-                    if (runIds != null && !runIds.isEmpty()) {
-                        runIdMap.put(testName, runIds.get(0));
-                    }
-                }
-            }
-        } catch (Exception e) {
+            System.err.println("Error uploading screenshot for Test Case: " + testCaseId);
             e.printStackTrace();
         }
     }
 
-    private void uploadScreenshot(String testName, File screenshotFile) {
-        Integer runId = runIdMap.get(testName);
-        if (runId == null) {
-            System.err.println("No runId found for testName: " + testName);
-            return;
-        }
-
-        String uploadEndpoint = MEDIA_UPLOAD_ENDPOINT_TEMPLATE.replace("{testRunId}", runId.toString());
-        OkHttpClient client = createHttpClient();
-        MultipartBody.Builder builder = new MultipartBody.Builder()
-                .setType(MultipartBody.FORM)
-                .addFormDataPart("file", screenshotFile.getName(),
-                        RequestBody.create(screenshotFile, MediaType.parse("image/png")));
-        Request request = new Request.Builder()
-                .url(uploadEndpoint)
-                .addHeader("Authorization", AUTH_TOKEN)
-                .post(builder.build())
+    private OkHttpClient createHttpClient() {
+        return new OkHttpClient.Builder()
+                .connectTimeout(60, TimeUnit.SECONDS)
+                .readTimeout(60, TimeUnit.SECONDS)
+                .writeTimeout(60, TimeUnit.SECONDS)
                 .build();
-
-        int maxRetries = 3;
-        for (int attempt = 1; attempt <= maxRetries; attempt++) {
-            try (Response response = client.newCall(request).execute()) {
-                if (response.isSuccessful()) {
-                    System.out.println("Screenshot uploaded successfully for testName: " + testName);
-                    return;
-                } else {
-                    logErrorDetails(response);
-                }
-            } catch (IOException e) {
-                System.err.println("Attempt " + attempt + " failed for testName: " + testName + " due to: " + e.getMessage());
-            }
-        }
-
-        System.err.println("Failed to upload screenshot for testName: " + testName + " after " + maxRetries + " attempts.");
     }
 
-    private void logErrorDetails(Response response) throws IOException {
-        if (response != null && response.body() != null) {
-            System.err.println("Error Response Code: " + response.code());
-            System.err.println("Error Response Body: " + response.body().string());
-        }
+    @Override
+    public void onStart(ITestContext context) {
+        System.out.println("Test Execution Started!");
+    }
+
+    @Override
+    public void onFinish(ITestContext context) {
+        System.out.println("Test Execution Finished!");
     }
 }

@@ -52,6 +52,7 @@ public class TestApp {
     public void tearDown() {
 
         TestAutomationFramework.closeBrowser();
+        System.out.println("Test Method ran");
     }
 
     @Test(retryAnalyzer = listeners.RetryAnalyzer.class)

@@ -1,8 +1,10 @@
 package listeners;
-import org.example.framework.TestAutomationFramework;
+
 import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
+import org.example.framework.TestAutomationFramework;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -21,12 +23,13 @@ public class TestListener implements ITestListener {
     @Override
     public void onTestFailure(ITestResult result) {
         System.out.println("Test Failed: " + result.getMethod().getMethodName());
-        String timestamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
-        String filename = "screenshots/" + result.getMethod().getMethodName() + "_" + timestamp + ".png";
-        TestAutomationFramework.captureScreenshot(filename);
-        System.out.println("Screenshot saved: " + filename);
-    }
 
+        // Generate a retry count (or use 0 if no retry logic is used here)
+        int retryCount = result.getMethod().getCurrentInvocationCount() - 1;
+
+        // Capture the screenshot with the new method signature
+        TestAutomationFramework.captureScreenshot(result.getMethod().getMethodName(), retryCount);
+    }
 
     @Override
     public void onTestSkipped(ITestResult result) {
@@ -43,4 +46,3 @@ public class TestListener implements ITestListener {
         System.out.println("Test Suite Finished: " + context.getName());
     }
 }
-
