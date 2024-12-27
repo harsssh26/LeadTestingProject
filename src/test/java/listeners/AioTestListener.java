@@ -19,13 +19,11 @@ public class AioTestListener implements ITestListener {
     private static final String CREATE_RUN_ENDPOINT_TEMPLATE = BASE_URL + "/SCRUM/testcycle/{testCycleId}/testcase/{testCaseId}/testrun?createNewRun=true";
     private static final String UPLOAD_ATTACHMENT_ENDPOINT_TEMPLATE = BASE_URL + "/{jiraProjectId}/testcycle/{testCycleId}/testcase/{testCaseId}/attachment";
     private static final String AUTH_TOKEN = "AioAuth ZGE4NmMxYjctMjM2MC0zNWRhLTgzNDMtMWJmNzNiYzdlYmJkLjlhZDA4MWM1LWNlODMtNGNlYS1hOTI3LWFiOWMxMTc3OWYxMg==";
-
     private final Map<String, String> testCaseMap = new HashMap<>();
     private final String testCycleId = "SCRUM-CY-Adhoc";
     private final String jiraProjectId = "SCRUM";
 
     public AioTestListener() {
-        // Map test methods to test case IDs in AIO
         testCaseMap.put("testValidLogin", "SCRUM-TC-1");
         testCaseMap.put("testInvalidLogin", "SCRUM-TC-2");
         testCaseMap.put("testNoCredentialLogin", "SCRUM-TC-3");

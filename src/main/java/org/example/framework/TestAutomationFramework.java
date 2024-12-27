@@ -54,17 +54,12 @@ public class TestAutomationFramework {
         if (driver instanceof TakesScreenshot) {
             File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
             try {
-                // Generate the path
                 String timestamp = new java.text.SimpleDateFormat("yyyyMMddHHmmss").format(new java.util.Date());
                 String path = "screenshots/" + testName + "_retry" + retryCount + "_" + timestamp + ".png";
-
-                // Ensure the directory exists
                 File directory = new File("screenshots");
                 if (!directory.exists()) {
                     directory.mkdirs();
                 }
-
-                // Copy the screenshot file to the desired location
                 Files.copy(screenshot.toPath(), Paths.get(path));
                 System.out.println("Screenshot saved: " + path);
                 return path;

@@ -15,8 +15,6 @@ public class LeadPage {
     private final Faker faker = new Faker();
     private final WebDriver driver;
     private final WebDriverWait wait;
-
-    // Faker-generated data
     String salutation = "Mr.";
     String firstName = faker.name().firstName();
     String lastName = faker.name().lastName();
@@ -31,7 +29,7 @@ public class LeadPage {
     public LeadPage(WebDriver driver) {
         this.utility = new Utility(driver);
         this.driver = driver;
-        this.wait = new WebDriverWait(driver, Duration.ofSeconds(20)); // Wait for up to 20 seconds
+        this.wait = new WebDriverWait(driver, Duration.ofSeconds(18)); // Wait for up to 20 seconds
     }
 
     public void  navigateToLeads()

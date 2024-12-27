@@ -39,8 +39,6 @@ public class Utility {
         element.clear();
         element.sendKeys(text);
     }
-
-    // Scroll to element using a By locator
     public void scrollToElement(By locator) {
         WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
         js.executeScript("arguments[0].scrollIntoView(true);", element);
