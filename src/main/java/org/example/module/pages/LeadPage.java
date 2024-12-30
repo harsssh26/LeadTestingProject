@@ -134,7 +134,7 @@ public class LeadPage {
         String opportunityName = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//span[text()='Opportunity Name']/ancestor::div[contains(@class, 'slds-form-element')]//input[contains(@class, 'input')]"))).getAttribute("value");
 
         wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[normalize-space()='Convert']")));
-        utility.jsClick(By.xpath("//button[normalize-space()='Convert']"));
+        utility.jsClick(By.xpath("//button[normalize-space()='Convert']"));// Convert button Xpath
 
         wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[normalize-space()='Go to Leads']")));
         utility.jsClick(By.xpath("//button[normalize-space()='Go to Leads']"));
