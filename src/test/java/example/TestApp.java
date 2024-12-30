@@ -61,7 +61,7 @@ public class TestApp {
     @Description("This test verifies that a user can login with valid credentials.")
     public void testValidLogin() throws InterruptedException {
         synchronized (lock) {
-            performLogin("harsh.wardhan-2vpx@force.com", "Harsh@2623123");
+            performLogin("harshwsinha80-mhtl@force.com", "Harsh@73792610");
             verifyHomePage();
             performLogout();
 
@@ -96,7 +96,7 @@ public class TestApp {
     @Description("This test verifies that a new lead can be created and verified.")
     public void testCreateNewLead() throws InterruptedException {
         synchronized (lock) {
-            performLogin("harsh.wardhan-2vpx@force.com", "Harsh@73792610");
+            performLogin("harshwsinha80-mhtl@force.com", "Harsh@73792610");
             navigateToLeadPage();
             createNewLead();
             verifyLeadCreation();
