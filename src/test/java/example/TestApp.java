@@ -40,7 +40,11 @@ public class TestApp {
     public void setup() throws InterruptedException {
         synchronized (lock) {
             driver = TestAutomationFramework.getDriver();
-            TestAutomationFramework.openUrl("https://app-saas-9590.lightning.force.com/lightning/page/home");
+
+            TestAutomationFramework.openUrl("https://inspiration-ruby-4894.lightning.force.com/lightning/page/home");
+
+//            TestAutomationFramework.openUrl("https://app-saas-9590.lightning.force.com/lightning/page/home");
+
 //            TestAutomationFramework.openUrl("https://ck-qe-dev-ed.develop.lightning.force.com/lightning/setup/SetupOneHome/home");
             Thread.sleep(2000);
             loginPage = new LoginPage(driver);
