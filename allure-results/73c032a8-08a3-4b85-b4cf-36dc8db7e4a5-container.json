@@ -1,0 +1,1 @@
+{"uuid":"73c032a8-08a3-4b85-b4cf-36dc8db7e4a5","name":"example.TestApp.setup","children":["8668a55f-7d7c-4196-b4e0-4e42c4b01728"],"description":"","befores":[{"name":"setup","status":"passed","stage":"finished","description":"","steps":[],"attachments":[],"parameters":[],"start":1735899026428,"stop":1735899031611}],"afters":[],"start":1735899026428,"stop":1735899031611}
