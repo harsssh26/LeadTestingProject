@@ -5,9 +5,6 @@ import org.testng.ITestListener;
 import org.testng.ITestResult;
 import org.example.framework.TestAutomationFramework;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 public class TestListener implements ITestListener {
 
     @Override

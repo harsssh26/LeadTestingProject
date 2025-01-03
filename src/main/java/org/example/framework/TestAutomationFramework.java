@@ -15,6 +15,7 @@ import java.time.Duration;
 
 public class TestAutomationFramework {
 
+    //Web Driver Configuration for usage in each thread
     private static final ThreadLocal<WebDriver> driver = ThreadLocal.withInitial(() -> {
         WebDriverManager.chromedriver().setup();
         ChromeOptions options = new ChromeOptions();
@@ -27,11 +28,11 @@ public class TestAutomationFramework {
         options.addArguments("--disable-extensions");
         options.addArguments("--disable-blink-features=AutomationControlled");
         options.setPageLoadStrategy(PageLoadStrategy.NORMAL);
-        WebDriver webDriver = new ChromeDriver(options);
+        WebDriver webDriver = new ChromeDriver(options);// creates new chrome driver with the specific options
         webDriver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
         webDriver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(30));
         webDriver.manage().timeouts().scriptTimeout(Duration.ofSeconds(30));
-        return webDriver;
+        return webDriver; // returns configured web driver for each thread
     });
 
     public static WebDriver getDriver() {
@@ -51,7 +52,8 @@ public class TestAutomationFramework {
 
     public static String captureScreenshot(String testName, int retryCount) {
         WebDriver driver = getDriver();
-        if (driver instanceof TakesScreenshot) {
+        if (driver instanceof TakesScreenshot)
+        {
             File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
             try {
                 String timestamp = new java.text.SimpleDateFormat("yyyyMMddHHmmss").format(new java.util.Date());

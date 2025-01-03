@@ -1,8 +1,8 @@
 package listeners;
 import org.testng.IRetryAnalyzer;
-import org.testng.ITestResult;
-
-public class RetryAnalyzer implements IRetryAnalyzer {
+import org.testng.ITestResult; // ITestResult provides details about the test results
+public class RetryAnalyzer implements IRetryAnalyzer // Here IRetryAnalyzer is a TestNG interface that allows defining retry logic for failed test cases
+{
     private int retryCount = 0;
     private static final int maxRetryCount = 2;
 

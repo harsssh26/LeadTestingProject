@@ -22,7 +22,6 @@ public class TestApp {
     WebDriver driver;
     private LoginPage loginPage;
     private LeadPage leadPage;
-    private Map<String, String> testResults = new HashMap<>();
 
     @BeforeClass
     public void displayS() // Executes once before first test method in the overall test class execution mainly used to set up shared resources for all test methods[Runs only once per test class]
@@ -42,10 +41,6 @@ public class TestApp {
             driver = TestAutomationFramework.getDriver();
 
             TestAutomationFramework.openUrl("https://inspiration-ruby-4894.lightning.force.com/lightning/page/home");
-
-//            TestAutomationFramework.openUrl("https://app-saas-9590.lightning.force.com/lightning/page/home");
-
-//            TestAutomationFramework.openUrl("https://ck-qe-dev-ed.develop.lightning.force.com/lightning/setup/SetupOneHome/home");
             Thread.sleep(2000);
             loginPage = new LoginPage(driver);
             leadPage = new LeadPage(driver);
