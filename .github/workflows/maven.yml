@@ -29,13 +29,25 @@ jobs:
           echo "Installing the latest version of Google Chrome and ChromeDriver..."
           sudo apt-get update
           sudo apt-get install -y google-chrome-stable
-          LATEST_VERSION=$(google-chrome --version | grep -oP '\d+\.\d+\.\d+')
-          echo "Detected Chrome version: $LATEST_VERSION"
-          DRIVER_URL="https://chromedriver.storage.googleapis.com/$LATEST_VERSION/chromedriver_linux64.zip"
+          
+          # Detect Chrome version
+          CHROME_VERSION=$(google-chrome --version | grep -oP '\d+\.\d+\.\d+')
+          echo "Detected Chrome version: $CHROME_VERSION"
+          
+          # Find compatible ChromeDriver version
+          DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION")
+          if [ -z "$DRIVER_VERSION" ]; then
+            DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE")
+          fi
+          echo "Detected ChromeDriver version: $DRIVER_VERSION"
+          
+          # Download and install ChromeDriver
+          DRIVER_URL="https://chromedriver.storage.googleapis.com/$DRIVER_VERSION/chromedriver_linux64.zip"
           echo "Downloading ChromeDriver from: $DRIVER_URL"
           wget -q -O chromedriver.zip $DRIVER_URL
           unzip chromedriver.zip
           sudo mv chromedriver /usr/bin/
+          chmod +x /usr/bin/chromedriver
 
       # Step 4: Debugging the environment
       - name: Debug Environment
