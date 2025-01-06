@@ -4,6 +4,7 @@ import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.qameta.allure.Step;
+import org.example.framework.OTPHandler;
 import org.example.framework.TestAutomationFramework;
 import org.example.module.pages.LeadPage;
 import org.example.module.pages.LoginPage;
@@ -61,6 +62,7 @@ public class TestApp {
     public void testValidLogin() throws InterruptedException {
         synchronized (lock) {
             performLogin("harshwsinha80-mhtl@force.com", "Harsh@73792610");
+            handleOTPVerification();
             verifyHomePage();
             performLogout();
 
@@ -74,6 +76,7 @@ public class TestApp {
     public void testInvalidLogin() throws InterruptedException {
         synchronized (lock) {
             performLogin("invalid@example.com", "wrong password");
+            handleOTPVerification();
             verifyLoginError();
         }
     }
@@ -85,6 +88,7 @@ public class TestApp {
     public void testNoCredentialLogin() throws InterruptedException {
         synchronized (lock) {
             performLoginWithoutCredentials();
+            handleOTPVerification();
             verifyStillOnLoginPage();
         }
     }
@@ -96,6 +100,7 @@ public class TestApp {
     public void testCreateNewLead() throws InterruptedException {
         synchronized (lock) {
             performLogin("harshwsinha80-mhtl@force.com", "Harsh@73792610");
+            handleOTPVerification();
             navigateToLeadPage();
             createNewLead();
             verifyLeadCreation();
@@ -150,4 +155,11 @@ public class TestApp {
     public void verifyLeadCreation() {
         Assert.assertTrue(leadPage.checkCreatedLead(), "The new lead should be created and visible.");
     }
+
+    @Step("Handle OTP Verification if required")
+    public void handleOTPVerification() {
+        OTPHandler otpHandler = new OTPHandler(driver);
+        otpHandler.handleVerification();
+    }
+
 }
