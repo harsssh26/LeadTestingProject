@@ -24,7 +24,6 @@ public class OTPHandler {
     public void handleVerification() {
         logInfo("Starting OTP verification process...");
 
-        // Check if the verification screen is displayed
         if (isVerificationScreenDisplayed()) {
             logInfo("Verification screen detected.");
             String otp = fetchOTPFromEmail();
@@ -32,7 +31,7 @@ public class OTPHandler {
                 logInfo("OTP fetched successfully: " + otp);
                 enterOTPAndVerify(otp);
             } else {
-                logError("Failed to fetch OTP from email.");
+                logError("Failed to fetch OTP from email. Verification aborted.");
             }
         } else {
             logError("Verification screen not detected. Skipping OTP process.");
@@ -42,8 +41,8 @@ public class OTPHandler {
     private boolean isVerificationScreenDisplayed() {
         try {
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
-            wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//h2[@id='header' and contains(text(), 'Verify Your Identity')]"))); // Updated header locator
-            logInfo("Verification screen is displayed.");
+            wait.until(ExpectedConditions.visibilityOfElementLocated(
+                    By.xpath("//h2[@id='header' and contains(text(), 'Verify Your Identity')]")));
             return true;
         } catch (Exception e) {
             logError("Verification screen not displayed: " + e.getMessage());
@@ -52,10 +51,9 @@ public class OTPHandler {
     }
 
     private String fetchOTPFromEmail() {
-        logInfo("Fetching OTP from email...");
         String host = "imap.gmail.com";
-        String user = "harshwsinha80@gmail.com";
-        String password = "sjhc buji zooa jied";
+        String user = "harshwsinha80@gmail.com"; // Replace with your email
+        String password = "sjhc buji zooa jied"; // Replace with your app password
 
         try {
             Properties properties = new Properties();
@@ -65,22 +63,34 @@ public class OTPHandler {
             properties.put("mail.imaps.ssl.enable", "true");
 
             logInfo("Connecting to Gmail IMAP server...");
-            Session session = Session.getDefaultInstance(properties, null);
+            Session session = Session.getInstance(properties, null);
             Store store = session.getStore("imaps");
             store.connect(host, user, password);
 
             logInfo("Accessing inbox and searching for unread messages...");
             Folder inbox = store.getFolder("INBOX");
             inbox.open(Folder.READ_ONLY);
+
             Message[] messages = inbox.search(new FlagTerm(new Flags(Flags.Flag.SEEN), false));
             logInfo(messages.length + " unread messages found.");
 
             for (Message message : messages) {
-                logInfo("Checking email with subject: " + message.getSubject());
-                if (message.getSubject().contains("Verify Your Identity")) {
-                    String content = message.getContent().toString();
-                    logInfo("OTP email found. Extracting OTP...");
-                    return extractOTP(content);
+                String subject = message.getSubject();
+                Address[] fromAddresses = message.getFrom();
+                String sender = fromAddresses[0].toString();
+
+                logInfo("Checking email with subject: " + subject + " and sender: " + sender);
+
+                // Add filtering for subject and sender
+                if (subject != null && subject.contains("Verify Your Identity in Salesforce")
+                        && sender.contains("noreply@salesforce.com")) {
+                    logInfo("Matching email found. Extracting OTP...");
+                    Object content = message.getContent();
+                    if (content instanceof String) {
+                        return extractOTP((String) content);
+                    } else if (content instanceof Multipart) {
+                        return extractOTPFromMultipart((Multipart) content);
+                    }
                 }
             }
         } catch (Exception e) {
@@ -90,15 +100,27 @@ public class OTPHandler {
     }
 
     private String extractOTP(String content) {
-        logInfo("Extracting OTP from email content...");
         Pattern pattern = Pattern.compile("\\d{6}");
         Matcher matcher = pattern.matcher(content);
         if (matcher.find()) {
-            String otp = matcher.group();
-            logInfo("OTP extracted successfully: " + otp);
-            return otp;
+            return matcher.group();
         }
         logError("Failed to extract OTP from email content.");
+        return null;
+    }
+
+    private String extractOTPFromMultipart(Multipart multipart) {
+        try {
+            for (int i = 0; i < multipart.getCount(); i++) {
+                BodyPart part = multipart.getBodyPart(i);
+                if (part.isMimeType("text/plain")) {
+                    String content = part.getContent().toString();
+                    return extractOTP(content);
+                }
+            }
+        } catch (Exception e) {
+            logError("Error while extracting OTP from multipart email content: " + e.getMessage());
+        }
         return null;
     }
 
@@ -106,11 +128,13 @@ public class OTPHandler {
         try {
             logInfo("Entering OTP into the verification field...");
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
-            WebElement otpField = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//input[@placeholder='Verification Code']"))); // Updated locator
+            WebElement otpField = wait.until(ExpectedConditions.visibilityOfElementLocated(
+                    By.xpath("//input[@placeholder='Verification Code']")));
             otpField.sendKeys(otp);
 
             logInfo("Clicking the Verify button...");
-            WebElement verifyButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[text()='Verify']"))); // Updated locator
+            WebElement verifyButton = wait.until(ExpectedConditions.elementToBeClickable(
+                    By.xpath("//button[text()='Verify']")));
             verifyButton.click();
             logInfo("OTP entered and Verify button clicked.");
         } catch (Exception e) {
