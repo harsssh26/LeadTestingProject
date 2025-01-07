@@ -54,8 +54,8 @@ public class OTPHandler {
 
     private String fetchOTPFromEmail() {
         String host = "imap.gmail.com";
-        String user = "harshwsinha80@gmail.com"; // Replace with your email
-        String password = "sjhc buji zooa jied"; // Replace with your app password
+        String user = "harshwsinha80@gmail.com";
+        String password = "sjhc buji zooa jied";
 
         try {
             Properties properties = new Properties();

@@ -34,7 +34,7 @@ public class TestAutomationFramework {
         webDriver.manage().timeouts().scriptTimeout(Duration.ofSeconds(30));
         return webDriver; // returns configured web driver for each thread
     });
-
+//changes
     public static WebDriver getDriver() {
         return driver.get();
     }
