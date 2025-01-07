@@ -9,6 +9,8 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import javax.mail.*;
 import javax.mail.search.FlagTerm;
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -71,39 +73,62 @@ public class OTPHandler {
             Folder inbox = store.getFolder("INBOX");
             inbox.open(Folder.READ_ONLY);
 
+            // Fetch unread messages
             Message[] messages = inbox.search(new FlagTerm(new Flags(Flags.Flag.SEEN), false));
-            logInfo(messages.length + " unread messages found.");
+            logInfo("Unread messages found: " + messages.length);
 
-            for (Message message : messages) {
-                String subject = message.getSubject();
-                Address[] fromAddresses = message.getFrom();
-                String sender = fromAddresses[0].toString();
+            // Filter messages by subject and sender, and find the latest one
+            return Arrays.stream(messages)
+                    .filter(message -> {
+                        try {
+                            String subject = message.getSubject();
+                            String sender = message.getFrom()[0].toString();
+                            return subject != null && subject.contains("Verify Your Identity in Salesforce")
+                                    && sender.contains("noreply@salesforce.com");
+                        } catch (Exception e) {
+                            return false;
+                        }
+                    })
+                    .max(Comparator.comparing(this::getMessageReceivedDate))
+                    .map(this::extractOTPFromMessage)
+                    .orElse(null);
 
-                logInfo("Checking email with subject: " + subject + " and sender: " + sender);
-
-                // Add filtering for subject and sender
-                if (subject != null && subject.contains("Verify Your Identity in Salesforce")
-                        && sender.contains("noreply@salesforce.com")) {
-                    logInfo("Matching email found. Extracting OTP...");
-                    Object content = message.getContent();
-                    if (content instanceof String) {
-                        return extractOTP((String) content);
-                    } else if (content instanceof Multipart) {
-                        return extractOTPFromMultipart((Multipart) content);
-                    }
-                }
-            }
         } catch (Exception e) {
             logError("Error while fetching OTP from email: " + e.getMessage());
         }
         return null;
     }
 
+    private String extractOTPFromMessage(Message message) {
+        try {
+            logInfo("Processing email from: " + Arrays.toString(message.getFrom()) + " with subject: " + message.getSubject());
+            Object content = message.getContent();
+            if (content instanceof String) {
+                return extractOTP((String) content);
+            } else if (content instanceof Multipart) {
+                return extractOTPFromMultipart((Multipart) content);
+            }
+        } catch (Exception e) {
+            logError("Error while extracting OTP from email content: " + e.getMessage());
+        }
+        return null;
+    }
+
+    private java.util.Date getMessageReceivedDate(Message message) {
+        try {
+            return message.getReceivedDate();
+        } catch (Exception e) {
+            return new java.util.Date(0); // Fallback to epoch if the received date is unavailable
+        }
+    }
+
     private String extractOTP(String content) {
         Pattern pattern = Pattern.compile("\\d{6}");
         Matcher matcher = pattern.matcher(content);
         if (matcher.find()) {
-            return matcher.group();
+            String otp = matcher.group();
+            logInfo("Extracted OTP: " + otp);
+            return otp;
         }
         logError("Failed to extract OTP from email content.");
         return null;
