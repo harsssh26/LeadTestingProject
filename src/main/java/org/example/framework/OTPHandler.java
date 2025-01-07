@@ -24,22 +24,22 @@ public class OTPHandler {
     }
     //def
 
-    public void handleVerification() {
-        logInfo("Starting OTP verification process...");
-
-        if (isVerificationScreenDisplayed()) {
-            logInfo("Verification screen detected.");
-            String otp = fetchOTPFromEmail();
-            if (otp != null) {
-                logInfo("OTP fetched successfully: " + otp);
-                enterOTPAndVerify(otp);
-            } else {
-                logError("Failed to fetch OTP from email. Verification aborted.");
-            }
-        } else {
-            logInfo("Verification screen not detected. Skipping OTP process.");
-        }
-    }
+//    public void handleVerification() {
+//        logInfo("Starting OTP verification process...");
+//
+//        if (isVerificationScreenDisplayed()) {
+//            logInfo("Verification screen detected.");
+//            String otp = fetchOTPFromEmail();
+//            if (otp != null) {
+//                logInfo("OTP fetched successfully: " + otp);
+//                enterOTPAndVerify(otp);
+//            } else {
+//                logError("Failed to fetch OTP from email. Verification aborted.");
+//            }
+//        } else {
+//            logInfo("Verification screen not detected. Skipping OTP process.");
+//        }
+//    }
 
     private boolean isVerificationScreenDisplayed() {
         try {
