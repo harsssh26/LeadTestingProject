@@ -38,7 +38,7 @@ public class OTPHandler {
         } else {
             logInfo("Verification screen not detected. Skipping OTP process.");
         }
-    }//change
+    }
 
     private boolean isVerificationScreenDisplayed() {
         try {
@@ -86,6 +86,7 @@ public class OTPHandler {
                             return subject != null && subject.contains("Verify Your Identity in Salesforce")
                                     && sender.contains("noreply@salesforce.com");
                         } catch (Exception e) {
+                            logError("Error filtering email: " + e.getMessage());
                             return false;
                         }
                     })
@@ -118,6 +119,7 @@ public class OTPHandler {
         try {
             return message.getReceivedDate();
         } catch (Exception e) {
+            logError("Error getting message received date: " + e.getMessage());
             return new java.util.Date(0); // Fallback to epoch if the received date is unavailable
         }
     }
