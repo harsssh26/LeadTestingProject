@@ -50,7 +50,7 @@ public class OTPHandler {
                     By.xpath("//h2[@id='header' and contains(text(), 'Verify Your Identity')]")));
             return true;
         } catch (Exception e) {
-            logError("Verification screen not displayed: " + e.getMessage());
+            logInfo("Verification screen not displayed: " + e.getMessage());
             return false;
         }
     }
