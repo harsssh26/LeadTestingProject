@@ -7,7 +7,10 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import javax.mail.*;
+import javax.mail.search.AndTerm;
 import javax.mail.search.FlagTerm;
+import javax.mail.search.SearchTerm;
+import javax.mail.search.SubjectTerm;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -55,8 +58,9 @@ public class OTPHandler {
 
     private String fetchOTPFromEmail() {
         String host = "imap.gmail.com";
-        String user = "harshwsinha80@gmail.com";
-        String password = "sjhc buji zooa jied";
+        String user = "harshwsinha80@gmail.com"; // Replace with your email
+        String password = "sjhc buji zooa jied"; // Replace with your app password
+
         try {
             Properties properties = new Properties();
             properties.put("mail.store.protocol", "imaps");
@@ -69,25 +73,22 @@ public class OTPHandler {
             Store store = session.getStore("imaps");
             store.connect(host, user, password);
 
-            logInfo("Accessing inbox and searching for unread messages...");
+            logInfo("Accessing inbox and searching for unread messages with specific subject...");
             Folder inbox = store.getFolder("INBOX");
             inbox.open(Folder.READ_ONLY);
-            Message[] messages = inbox.search(new FlagTerm(new Flags(Flags.Flag.SEEN), false));
-            logInfo("Unread messages found: " + messages.length);
 
-            // Filter messages by subject and sender, and find the latest one
+            // Define a search term for unread messages with the exact subject
+            SearchTerm searchTerm = new AndTerm(
+                    new FlagTerm(new Flags(Flags.Flag.SEEN), false), // Only unread messages
+                    new SubjectTerm("Verify Your Identity in Salesforce") // Match exact subject
+            );
+
+            // Search messages based on the criteria
+            Message[] messages = inbox.search(searchTerm);
+            logInfo("Targeted unread messages found: " + messages.length);
+
+            // Find the latest email with the desired subject
             return Arrays.stream(messages)
-                    .filter(message -> {
-                        try {
-                            String subject = message.getSubject();
-                            String sender = message.getFrom()[0].toString();
-                            return subject != null && subject.contains("Verify Your Identity in Salesforce")
-                                    && sender.contains("noreply@salesforce.com");
-                        } catch (Exception e) {
-                            logError("Error while filtering emails: " + e.getMessage());
-                            return false;
-                        }
-                    })
                     .max(Comparator.comparing(this::getMessageReceivedDate))
                     .map(this::extractOTPFromMessage)
                     .orElse(null);
@@ -97,6 +98,7 @@ public class OTPHandler {
         }
         return null;
     }
+
 
     private String extractOTPFromMessage(Message message) {
         try {
