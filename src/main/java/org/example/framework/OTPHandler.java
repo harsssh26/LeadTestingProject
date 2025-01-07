@@ -22,6 +22,7 @@ public class OTPHandler {
     public OTPHandler(WebDriver driver) {
         this.driver = driver;
     }
+    //abc
 
     public void handleVerification() {
         logInfo("Starting OTP verification process...");
@@ -54,8 +55,8 @@ public class OTPHandler {
 
     private String fetchOTPFromEmail() {
         String host = "imap.gmail.com";
-        String user = "harshwsinha80@gmail.com";
-        String password = "sjhc buji zooa jied";
+        String user = "harshwsinha80@gmail.com"; // Replace with your email
+        String password = "sjhc buji zooa jied"; // Replace with your app password
 
         try {
             Properties properties = new Properties();
@@ -86,7 +87,7 @@ public class OTPHandler {
                             return subject != null && subject.contains("Verify Your Identity in Salesforce")
                                     && sender.contains("noreply@salesforce.com");
                         } catch (Exception e) {
-                            logError("Error filtering email: " + e.getMessage());
+                            logError("Error while filtering emails: " + e.getMessage());
                             return false;
                         }
                     })
@@ -119,7 +120,7 @@ public class OTPHandler {
         try {
             return message.getReceivedDate();
         } catch (Exception e) {
-            logError("Error getting message received date: " + e.getMessage());
+            logError("Error while fetching message received date: " + e.getMessage());
             return new java.util.Date(0); // Fallback to epoch if the received date is unavailable
         }
     }
