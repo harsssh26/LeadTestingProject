@@ -31,6 +31,15 @@ public class OTPHandler {
 
         if (isVerificationScreenDisplayed()) {
             logInfo("Verification screen detected.");
+
+            // Adding delay to allow email arrival
+            logInfo("Waiting for the email to arrive...");
+            try {
+                Thread.sleep(8000); // Delay of 5 seconds
+            } catch (InterruptedException e) {
+                logError("Thread interrupted while waiting: " + e.getMessage());
+            }
+
             String otp = fetchOTPFromEmail();
             if (otp != null) {
                 logInfo("OTP fetched successfully: " + otp);
@@ -154,12 +163,12 @@ public class OTPHandler {
             logInfo("Entering OTP into the verification field...");
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
             WebElement otpField = wait.until(ExpectedConditions.visibilityOfElementLocated(
-                    By.xpath("//input[id='emc']")));
+                    By.xpath("//input[@id='emc']")));
             otpField.sendKeys(otp);
 
             logInfo("Clicking the Verify button...");
             WebElement verifyButton = wait.until(ExpectedConditions.elementToBeClickable(
-                    By.xpath("//button[id='save']")));
+                    By.xpath("//button[@id='save']")));
             verifyButton.click();
             logInfo("OTP entered and Verify button clicked.");
         } catch (Exception e) {
@@ -175,4 +184,3 @@ public class OTPHandler {
         System.err.println("[ERROR] " + message);
     }
 }
-//changes
