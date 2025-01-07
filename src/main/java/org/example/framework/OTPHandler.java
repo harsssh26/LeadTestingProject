@@ -154,12 +154,12 @@ public class OTPHandler {
             logInfo("Entering OTP into the verification field...");
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
             WebElement otpField = wait.until(ExpectedConditions.visibilityOfElementLocated(
-                    By.xpath("//input[@placeholder='Verification Code']")));
+                    By.xpath("//input[id='emc']")));
             otpField.sendKeys(otp);
 
             logInfo("Clicking the Verify button...");
             WebElement verifyButton = wait.until(ExpectedConditions.elementToBeClickable(
-                    By.xpath("//button[text()='Verify']")));
+                    By.xpath("//button[id='save']")));
             verifyButton.click();
             logInfo("OTP entered and Verify button clicked.");
         } catch (Exception e) {
