@@ -35,7 +35,7 @@ public class OTPHandler {
             // Adding delay to allow email arrival
             logInfo("Waiting for the email to arrive...");
             try {
-                Thread.sleep(8000); // Delay of 5 seconds
+                Thread.sleep(5000); // Delay of 5 seconds
             } catch (InterruptedException e) {
                 logError("Thread interrupted while waiting: " + e.getMessage());
             }
@@ -168,7 +168,8 @@ public class OTPHandler {
 
             logInfo("Clicking the Verify button...");
             WebElement verifyButton = wait.until(ExpectedConditions.elementToBeClickable(
-                    By.xpath("//button[@id='save']")));
+                    By.xpath("//input[@value='Verify' and @id='save']")));
+            //input[@value="Verify" and ]
             verifyButton.click();
             logInfo("OTP entered and Verify button clicked.");
         } catch (Exception e) {
