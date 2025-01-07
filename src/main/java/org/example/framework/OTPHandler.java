@@ -25,7 +25,6 @@ public class OTPHandler {
     public OTPHandler(WebDriver driver) {
         this.driver = driver;
     }
-    //def
 
     public void handleVerification() {
         logInfo("Starting OTP verification process...");
@@ -98,7 +97,6 @@ public class OTPHandler {
         }
         return null;
     }
-
 
     private String extractOTPFromMessage(Message message) {
         try {
