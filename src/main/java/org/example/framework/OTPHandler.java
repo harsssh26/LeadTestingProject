@@ -43,7 +43,7 @@ public class OTPHandler {
 
     private boolean isVerificationScreenDisplayed() {
         try {
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
             wait.until(ExpectedConditions.visibilityOfElementLocated(
                     By.xpath("//h2[@id='header' and contains(text(), 'Verify Your Identity')]")));
             return true;
@@ -55,9 +55,8 @@ public class OTPHandler {
 
     private String fetchOTPFromEmail() {
         String host = "imap.gmail.com";
-        String user = "harshwsinha80@gmail.com"; // Replace with your email
-        String password = "sjhc buji zooa jied"; // Replace with your app password
-
+        String user = "harshwsinha80@gmail.com";
+        String password = "sjhc buji zooa jied";
         try {
             Properties properties = new Properties();
             properties.put("mail.store.protocol", "imaps");
@@ -73,8 +72,6 @@ public class OTPHandler {
             logInfo("Accessing inbox and searching for unread messages...");
             Folder inbox = store.getFolder("INBOX");
             inbox.open(Folder.READ_ONLY);
-
-            // Fetch unread messages
             Message[] messages = inbox.search(new FlagTerm(new Flags(Flags.Flag.SEEN), false));
             logInfo("Unread messages found: " + messages.length);
 
