@@ -36,9 +36,9 @@ public class OTPHandler {
                 logError("Failed to fetch OTP from email. Verification aborted.");
             }
         } else {
-            logError("Verification screen not detected. Skipping OTP process.");
+            logInfo("Verification screen not detected. Skipping OTP process.");
         }
-    }
+    }//change
 
     private boolean isVerificationScreenDisplayed() {
         try {
