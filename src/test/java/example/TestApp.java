@@ -159,7 +159,7 @@ public class TestApp {
     @Step("Handle OTP Verification if required")
     public void handleOTPVerification() {
         OTPHandler otpHandler = new OTPHandler(driver);
-        otpHandler.handleVerification();
+//        otpHandler.handleVerification();
     }
 
 }
