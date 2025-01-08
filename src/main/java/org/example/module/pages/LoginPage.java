@@ -9,7 +9,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import java.time.Duration;
 
 public class LoginPage {
-    private static final String VALID_USERNAME ="harsh.wardhan-2vpx@force.com";
+    private static final String VALID_USERNAME ="harsh.wardhan-wtus@force.com";
     private static final String VALID_PASSWORD ="Harsh@73792610";
 
     private final Utility utility;
@@ -30,7 +30,7 @@ public class LoginPage {
     public LoginPage(WebDriver driver) {
         this.driver = driver;
         this.utility = new Utility(driver);
-        this.wait = new WebDriverWait(driver, Duration.ofSeconds(30)); // waiting for 30 seconds before element comes into visibility
+        this.wait = new WebDriverWait(driver, Duration.ofSeconds(30));
     }
 
     public  void login(String username, String password) {
