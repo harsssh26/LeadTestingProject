@@ -26,7 +26,7 @@ public class OTPHandler {
     }
 
     public void handleVerification() {
-        logInfo("Starting TOTP verification process...");//change
+        logInfo("Starting TOTP verification process...");
 
         if (isVerificationScreenDisplayed()) {
             logInfo("Verification screen detected.");
@@ -46,7 +46,7 @@ public class OTPHandler {
         try {
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(25));
             wait.until(ExpectedConditions.visibilityOfElementLocated(
-                    By.xpath("//h2[@id='header' and contains(text(), 'Verify Your Identity')]")));
+                    By.xpath("//h2[contains(text(), 'Verify Your Identity')]"))); // Simplified XPath
             return true;
         } catch (Exception e) {
             logInfo("Verification screen not displayed: " + e.getMessage());
@@ -56,21 +56,16 @@ public class OTPHandler {
 
     private String generateTOTP() {
         try {
-            // Decode the Base32 secret key
             Base32 base32 = new Base32();
             byte[] secretKeyBytes = base32.decode(SECRET_KEY);
 
-            // Create a TOTP generator with a 30-second time step
             TimeBasedOneTimePasswordGenerator totpGenerator = new TimeBasedOneTimePasswordGenerator(Duration.ofSeconds(OTP_PERIOD));
-
-            // Create the secret key for the TOTP generator
             Key key = new SecretKeySpec(secretKeyBytes, totpGenerator.getAlgorithm());
 
-            // Generate the OTP for the current time
             Instant now = Instant.now();
+            logInfo("Current Time (Instant.now()): " + now);
             int otp = totpGenerator.generateOneTimePassword(key, now);
 
-            // Return the OTP as a zero-padded 6-digit string
             return String.format("%06d", otp);
         } catch (Exception e) {
             logError("Error while generating TOTP: " + e.getMessage());
@@ -80,15 +75,13 @@ public class OTPHandler {
 
     private void enterOTPAndVerify(String otp) {
         try {
-            logInfo("Entering OTP into the verification field...");
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
             WebElement otpField = wait.until(ExpectedConditions.visibilityOfElementLocated(
-                    By.xpath("//input[@id='emc' and @name='emc']")));
+                    By.xpath("//input[@id='emc']")));
             otpField.sendKeys(otp);
 
-            logInfo("Clicking the Verify button...");
             WebElement verifyButton = wait.until(ExpectedConditions.elementToBeClickable(
-                    By.xpath("//input[@value='Verify' and @id='save' and @type='submit']")));
+                    By.xpath("//input[@value='Verify' and @id='save']")));
             verifyButton.click();
             logInfo("OTP entered and Verify button clicked.");
         } catch (Exception e) {
