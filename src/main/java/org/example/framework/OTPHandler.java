@@ -20,7 +20,7 @@ import javax.crypto.spec.SecretKeySpec;
 public class OTPHandler {
 
     private final WebDriver driver;
-    private static final String SECRET_KEY = "4TXCQHV5PK5J6FM2MDRAVFAZW3QTPO5T"; // Base32-encoded key
+    private static final String SECRET_KEY = "4TXCQHV5PK5J6FM2MDRAVFAZW3QTPO5T";
     private static final int OTP_PERIOD = 30; // Seconds
 
     public OTPHandler(WebDriver driver) {
