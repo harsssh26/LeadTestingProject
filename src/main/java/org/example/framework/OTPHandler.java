@@ -74,6 +74,7 @@ public class OTPHandler {
             long timeStepForTOTP = now.getEpochSecond() / OTP_PERIOD;
 
             // Log time details
+            //changes
             logInfo("Adjusted Time (IST): " + localTime + " | Unix Timestamp: " + now.getEpochSecond());
             logInfo("Time Step Index: " + timeStepForTOTP);
 
