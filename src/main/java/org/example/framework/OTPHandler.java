@@ -7,21 +7,15 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-import com.eatthepath.otp.TimeBasedOneTimePasswordGenerator;
+import com.warrenstrange.googleauth.GoogleAuthenticator;
+import com.warrenstrange.googleauth.GoogleAuthenticatorKey;
 
-import java.security.Key;
 import java.time.Duration;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-
-import javax.crypto.spec.SecretKeySpec;
 
 public class OTPHandler {
 
     private final WebDriver driver;
     private static final String SECRET_KEY = "WAWJPHJTFQUBYN6PG2GBCEQKJK6TIBUC"; // Base32-encoded key
-    private static final int OTP_PERIOD = 30; // Seconds
 
     public OTPHandler(WebDriver driver) {
         this.driver = driver;
@@ -58,32 +52,11 @@ public class OTPHandler {
 
     private String generateTOTP() {
         try {
-            Base32 base32 = new Base32();
-            byte[] secretKeyBytes = base32.decode(SECRET_KEY);
-
-            TimeBasedOneTimePasswordGenerator totpGenerator =
-                    new TimeBasedOneTimePasswordGenerator(Duration.ofSeconds(OTP_PERIOD));
-            Key key = new SecretKeySpec(secretKeyBytes, totpGenerator.getAlgorithm());
-
-            // Get the current time in IST
-            ZonedDateTime localTime = ZonedDateTime.now(ZoneId.of("Asia/Kolkata")); // Adjust to IST
-            Instant now = localTime.toInstant();
-            Instant earlier = now.minusSeconds(30);
-            Instant later = now.plusSeconds(30);
-
-            logInfo("Adjusted Time (IST): " + localTime);
-
-            // Generate TOTP for the current, earlier, and later time to handle clock skew
-            int otpNow = totpGenerator.generateOneTimePassword(key, now);
-            int otpEarlier = totpGenerator.generateOneTimePassword(key, earlier);
-            int otpLater = totpGenerator.generateOneTimePassword(key, later);
-
-            logInfo("TOTP Now: " + otpNow);
-            logInfo("TOTP Earlier: " + otpEarlier);
-            logInfo("TOTP Later: " + otpLater);
-
-            // Return the OTP for the current time (or pick one based on server tolerance)
-            return String.format("%06d", otpNow);
+            // Google Authenticator library to generate TOTP
+            GoogleAuthenticator gAuth = new GoogleAuthenticator();
+            GoogleAuthenticatorKey key = new GoogleAuthenticatorKey.Builder(SECRET_KEY).build();
+            int otp = gAuth.getTotpPassword(key.getKey());
+            return String.format("%06d", otp);
         } catch (Exception e) {
             logError("Error while generating TOTP: " + e.getMessage());
             return null;
@@ -116,4 +89,3 @@ public class OTPHandler {
         System.err.println("[ERROR] " + message);
     }
 }
-//changes
