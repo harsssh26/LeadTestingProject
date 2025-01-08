@@ -19,9 +19,9 @@ import javax.crypto.spec.SecretKeySpec;
 public class OTPHandler {
 
     private final WebDriver driver;
-    private static final String SECRET_KEY = "WAWJPHJTFQUBYN6PG2GBCEQKJK6TIBUC"; // Replace with your secret key
-    private static final int OTP_PERIOD = 30; // Seconds
-    private static final String ALGORITHM = "HmacSHA1"; // Default algorithm for Google Authenticator
+    private static final String SECRET_KEY = "WAWJPHJTFQUBYN6PG2GBCEQKJK6TIBUC"; // Base32 encoded secret key
+    private static final int OTP_PERIOD = 30; // Time step in seconds
+    private static final String ALGORITHM = "HmacSHA1"; // Algorithm used for TOTP
 
     public OTPHandler(WebDriver driver) {
         this.driver = driver;
@@ -62,34 +62,35 @@ public class OTPHandler {
             Base32 base32 = new Base32();
             byte[] secretKeyBytes = base32.decode(SECRET_KEY);
 
-            // Get current time and calculate time step
+            // Get current timestamp and calculate time step
             ZonedDateTime localTime = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
-            long currentTimeSeconds = localTime.toInstant().getEpochSecond();
-            long timeStep = currentTimeSeconds / OTP_PERIOD;
+            long currentTimestamp = localTime.toInstant().getEpochSecond();
+            long timeStep = currentTimestamp / OTP_PERIOD;
 
-            logInfo("Adjusted Time (IST): " + localTime + " | Unix Timestamp: " + currentTimeSeconds);
+            logInfo("Adjusted Time (IST): " + localTime + " | Unix Timestamp: " + currentTimestamp);
             logInfo("Time Step Index: " + timeStep);
 
-            // Convert time step to byte array (big-endian)
+            // Convert time step to a big-endian byte array
             ByteBuffer buffer = ByteBuffer.allocate(8);
             buffer.putLong(timeStep);
             byte[] timeBytes = buffer.array();
 
-            // Create HMAC-SHA1 hash
+            // Generate HMAC-SHA1 hash
             SecretKeySpec keySpec = new SecretKeySpec(secretKeyBytes, ALGORITHM);
             Mac mac = Mac.getInstance(ALGORITHM);
             mac.init(keySpec);
             byte[] hmacHash = mac.doFinal(timeBytes);
 
-            // Perform dynamic truncation to get a 4-byte binary code
+            // Perform dynamic truncation to get a 31-bit integer from the hash
             int offset = hmacHash[hmacHash.length - 1] & 0x0F;
             int binaryCode = ((hmacHash[offset] & 0x7F) << 24) |
                     ((hmacHash[offset + 1] & 0xFF) << 16) |
                     ((hmacHash[offset + 2] & 0xFF) << 8) |
                     (hmacHash[offset + 3] & 0xFF);
 
-            // Compute TOTP
+            // Compute the TOTP value by taking modulo
             int otp = binaryCode % (int) Math.pow(10, 6);
+
             logInfo("Generated OTP: " + String.format("%06d", otp));
             return String.format("%06d", otp);
 
@@ -113,6 +114,7 @@ public class OTPHandler {
                     By.xpath("//input[@value='Verify' and @id='save']")));
             verifyButton.click();
 
+            logInfo("Verification process completed.");
         } catch (Exception e) {
             logError("Error during OTP entry and verification: " + e.getMessage());
         }
