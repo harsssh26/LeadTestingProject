@@ -12,6 +12,8 @@ import com.eatthepath.otp.TimeBasedOneTimePasswordGenerator;
 import java.security.Key;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 import javax.crypto.spec.SecretKeySpec;
 
@@ -56,16 +58,27 @@ public class OTPHandler {
 
     private String generateTOTP() {
         try {
+            // Decode the Base32 secret key
             Base32 base32 = new Base32();
             byte[] secretKeyBytes = base32.decode(SECRET_KEY);
 
+            // Create a TOTP generator with a 30-second time step
             TimeBasedOneTimePasswordGenerator totpGenerator = new TimeBasedOneTimePasswordGenerator(Duration.ofSeconds(OTP_PERIOD));
+
+            // Create the secret key for the TOTP generator
             Key key = new SecretKeySpec(secretKeyBytes, totpGenerator.getAlgorithm());
 
-            Instant now = Instant.now();
-            logInfo("Current Time (Instant.now()): " + now);
-            int otp = totpGenerator.generateOneTimePassword(key, now);
+            // Adjust the time for the local time zone (UTC+5:30)
+            ZonedDateTime localTime = Instant.now().atZone(ZoneId.of("UTC+05:30"));
+            Instant adjustedTime = localTime.toInstant();
 
+            // Log the adjusted time for debugging
+            logInfo("Adjusted Time (UTC+5:30): " + adjustedTime);
+
+            // Generate the OTP for the adjusted time
+            int otp = totpGenerator.generateOneTimePassword(key, adjustedTime);
+
+            // Return the OTP as a zero-padded 6-digit string
             return String.format("%06d", otp);
         } catch (Exception e) {
             logError("Error while generating TOTP: " + e.getMessage());
@@ -75,6 +88,7 @@ public class OTPHandler {
 
     private void enterOTPAndVerify(String otp) {
         try {
+            logInfo("Entering OTP into the verification field...");
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
             WebElement otpField = wait.until(ExpectedConditions.visibilityOfElementLocated(
                     By.xpath("//input[@id='emc']")));
