@@ -20,7 +20,7 @@ import javax.crypto.spec.SecretKeySpec;
 public class OTPHandler {
 
     private final WebDriver driver;
-    private static final String SECRET_KEY = "WAWJPHJTFQUBYN6PG2GBCEQKJK6TIBUC";
+    private static final String SECRET_KEY = "WAWJPHJTFQUBYN6PG2GBCEQKJK6TIBUC"; // Base32-encoded key
     private static final int OTP_PERIOD = 30; // Seconds
 
     public OTPHandler(WebDriver driver) {
@@ -60,14 +60,30 @@ public class OTPHandler {
         try {
             Base32 base32 = new Base32();
             byte[] secretKeyBytes = base32.decode(SECRET_KEY);
+
             TimeBasedOneTimePasswordGenerator totpGenerator =
                     new TimeBasedOneTimePasswordGenerator(Duration.ofSeconds(OTP_PERIOD));
             Key key = new SecretKeySpec(secretKeyBytes, totpGenerator.getAlgorithm());
+
+            // Get the current time in IST
             ZonedDateTime localTime = ZonedDateTime.now(ZoneId.of("Asia/Kolkata")); // Adjust to IST
-            Instant adjustedTime = localTime.toInstant();
+            Instant now = localTime.toInstant();
+            Instant earlier = now.minusSeconds(30);
+            Instant later = now.plusSeconds(30);
+
             logInfo("Adjusted Time (IST): " + localTime);
-            int otp = totpGenerator.generateOneTimePassword(key, adjustedTime);
-            return String.format("%06d", otp);
+
+            // Generate TOTP for the current, earlier, and later time to handle clock skew
+            int otpNow = totpGenerator.generateOneTimePassword(key, now);
+            int otpEarlier = totpGenerator.generateOneTimePassword(key, earlier);
+            int otpLater = totpGenerator.generateOneTimePassword(key, later);
+
+            logInfo("TOTP Now: " + otpNow);
+            logInfo("TOTP Earlier: " + otpEarlier);
+            logInfo("TOTP Later: " + otpLater);
+
+            // Return the OTP for the current time (or pick one based on server tolerance)
+            return String.format("%06d", otpNow);
         } catch (Exception e) {
             logError("Error while generating TOTP: " + e.getMessage());
             return null;
