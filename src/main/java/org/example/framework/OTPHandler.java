@@ -20,9 +20,9 @@ import javax.crypto.spec.SecretKeySpec;
 public class OTPHandler {
 
     private final WebDriver driver;
-    private static final String SECRET_KEY = "WAWJPHJTFQUBYN6PG2GBCEQKJK6TIBUC"; // Replace with your actual secret key
-    private static final int OTP_PERIOD = 30; // Seconds (default for Google Authenticator)
-    private static final String ALGORITHM = "HmacSHA1"; // Default algorithm used by Google Authenticator
+    private static final String SECRET_KEY = "WAWJPHJTFQUBYN6PG2GBCEQKJK6TIBUC"; // Replace with your secret key
+    private static final int OTP_PERIOD = 30; // Seconds
+    private static final String ALGORITHM = "HmacSHA1"; // Default algorithm for Google Authenticator
 
     public OTPHandler(WebDriver driver) {
         this.driver = driver;
@@ -59,23 +59,16 @@ public class OTPHandler {
 
     private String generateTOTP() {
         try {
-            logInfo("Starting TOTP generation using Google Authenticator settings...");
-
-            // Decode the Base32-encoded secret key
             Base32 base32 = new Base32();
             byte[] secretKeyBytes = base32.decode(SECRET_KEY);
 
-            // Log algorithm and time step
-            logInfo("Google Authenticator settings:");
-            logInfo("Algorithm: " + ALGORITHM);
-            logInfo("Time Step (seconds): " + OTP_PERIOD);
-
-            // Create the TOTP generator with the specified time step
+            // Create the TOTP generator with the required time step
             TimeBasedOneTimePasswordGenerator totpGenerator =
                     new TimeBasedOneTimePasswordGenerator(Duration.ofSeconds(OTP_PERIOD));
-            Key key = new SecretKeySpec(secretKeyBytes, totpGenerator.getAlgorithm());
 
-            // Get the current time in IST
+            // Use the correct algorithm in the SecretKeySpec
+            Key key = new SecretKeySpec(secretKeyBytes, "HmacSHA1"); // Use "HmacSHA256" or "HmacSHA512" if required
+
             ZonedDateTime localTime = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
             Instant now = localTime.toInstant();
             long timeStepForTOTP = now.getEpochSecond() / OTP_PERIOD;
@@ -84,7 +77,6 @@ public class OTPHandler {
             logInfo("Adjusted Time (IST): " + localTime + " | Unix Timestamp: " + now.getEpochSecond());
             logInfo("Time Step Index: " + timeStepForTOTP);
 
-            // Generate the OTP
             int otp = totpGenerator.generateOneTimePassword(key, now);
 
             // Log generated OTP
@@ -98,12 +90,12 @@ public class OTPHandler {
         }
     }
 
+
     private void enterOTPAndVerify(String otp) {
         try {
             logInfo("Entering OTP into the verification field...");
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
 
-            // Enter the OTP into the input field
             WebElement otpField = wait.until(ExpectedConditions.visibilityOfElementLocated(
                     By.xpath("//input[@id='emc']")));
             otpField.sendKeys(otp);
@@ -113,18 +105,11 @@ public class OTPHandler {
                     By.xpath("//input[@value='Verify' and @id='save']")));
             verifyButton.click();
 
-            // Log server response if available
             logInfo("Waiting for server response...");
             WebElement serverResponse = wait.until(ExpectedConditions.visibilityOfElementLocated(
-                    By.xpath("//div[@id='server-response']"))); // Adjust to match the actual server response element
-            String serverFeedback = serverResponse.getText();
-            logInfo("Server Response: " + serverFeedback);
+                    By.xpath("//div[@id='server-response']")));
+            logInfo("Server Response: " + serverResponse.getText());
 
-            if (serverFeedback.contains("algorithm")) {
-                logInfo("Server is using algorithm: " + serverFeedback);
-            }
-
-            logInfo("OTP entered and Verify button clicked.");
         } catch (Exception e) {
             logError("Error during OTP entry and verification: " + e.getMessage());
         }
