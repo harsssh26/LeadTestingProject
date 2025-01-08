@@ -7,15 +7,22 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-import com.warrenstrange.googleauth.GoogleAuthenticator;
-import com.warrenstrange.googleauth.GoogleAuthenticatorKey;
+import com.eatthepath.otp.TimeBasedOneTimePasswordGenerator;
 
+import java.security.Key;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+
+import javax.crypto.spec.SecretKeySpec;
 
 public class OTPHandler {
 
     private final WebDriver driver;
-    private static final String SECRET_KEY = "WAWJPHJTFQUBYN6PG2GBCEQKJK6TIBUC"; // Base32-encoded key
+    private static final String SECRET_KEY = "WAWJPHJTFQUBYN6PG2GBCEQKJK6TIBUC"; // Replace with your actual secret key
+    private static final int OTP_PERIOD = 30; // Seconds (default for Google Authenticator)
+    private static final String ALGORITHM = "HmacSHA1"; // Default algorithm used by Google Authenticator
 
     public OTPHandler(WebDriver driver) {
         this.driver = driver;
@@ -52,11 +59,39 @@ public class OTPHandler {
 
     private String generateTOTP() {
         try {
-            // Google Authenticator library to generate TOTP
-            GoogleAuthenticator gAuth = new GoogleAuthenticator();
-            GoogleAuthenticatorKey key = new GoogleAuthenticatorKey.Builder(SECRET_KEY).build();
-            int otp = gAuth.getTotpPassword(key.getKey());
+            logInfo("Starting TOTP generation using Google Authenticator settings...");
+
+            // Decode the Base32-encoded secret key
+            Base32 base32 = new Base32();
+            byte[] secretKeyBytes = base32.decode(SECRET_KEY);
+
+            // Log algorithm and time step
+            logInfo("Google Authenticator settings:");
+            logInfo("Algorithm: " + ALGORITHM);
+            logInfo("Time Step (seconds): " + OTP_PERIOD);
+
+            // Create the TOTP generator with the specified time step
+            TimeBasedOneTimePasswordGenerator totpGenerator =
+                    new TimeBasedOneTimePasswordGenerator(Duration.ofSeconds(OTP_PERIOD));
+            Key key = new SecretKeySpec(secretKeyBytes, totpGenerator.getAlgorithm());
+
+            // Get the current time in IST
+            ZonedDateTime localTime = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
+            Instant now = localTime.toInstant();
+            long timeStepForTOTP = now.getEpochSecond() / OTP_PERIOD;
+
+            // Log time details
+            logInfo("Adjusted Time (IST): " + localTime + " | Unix Timestamp: " + now.getEpochSecond());
+            logInfo("Time Step Index: " + timeStepForTOTP);
+
+            // Generate the OTP
+            int otp = totpGenerator.generateOneTimePassword(key, now);
+
+            // Log generated OTP
+            logInfo("Generated OTP: " + String.format("%06d", otp));
+
             return String.format("%06d", otp);
+
         } catch (Exception e) {
             logError("Error while generating TOTP: " + e.getMessage());
             return null;
@@ -67,6 +102,8 @@ public class OTPHandler {
         try {
             logInfo("Entering OTP into the verification field...");
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
+
+            // Enter the OTP into the input field
             WebElement otpField = wait.until(ExpectedConditions.visibilityOfElementLocated(
                     By.xpath("//input[@id='emc']")));
             otpField.sendKeys(otp);
@@ -75,6 +112,18 @@ public class OTPHandler {
             WebElement verifyButton = wait.until(ExpectedConditions.elementToBeClickable(
                     By.xpath("//input[@value='Verify' and @id='save']")));
             verifyButton.click();
+
+            // Log server response if available
+            logInfo("Waiting for server response...");
+            WebElement serverResponse = wait.until(ExpectedConditions.visibilityOfElementLocated(
+                    By.xpath("//div[@id='server-response']"))); // Adjust to match the actual server response element
+            String serverFeedback = serverResponse.getText();
+            logInfo("Server Response: " + serverFeedback);
+
+            if (serverFeedback.contains("algorithm")) {
+                logInfo("Server is using algorithm: " + serverFeedback);
+            }
+
             logInfo("OTP entered and Verify button clicked.");
         } catch (Exception e) {
             logError("Error during OTP entry and verification: " + e.getMessage());
