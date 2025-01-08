@@ -41,7 +41,7 @@ public class TestApp {
         synchronized (lock) {
             driver = TestAutomationFramework.getDriver();
 
-            TestAutomationFramework.openUrl("https://inspiration-ruby-4894.lightning.force.com/lightning/page/home");
+            TestAutomationFramework.openUrl("https://velocity-velocity-11082.my.salesforce.com");
             Thread.sleep(2000);
             loginPage = new LoginPage(driver);
             leadPage = new LeadPage(driver);
@@ -61,7 +61,7 @@ public class TestApp {
     @Description("This test verifies that a user can login with valid credentials.")
     public void testValidLogin() throws InterruptedException {
         synchronized (lock) {
-            performLogin("harshwsinha80-mhtl@force.com", "Harsh@73792610");
+            performLogin("harsh.wardhan-wtus@force.com", "Harsh@73792610");
             handleOTPVerification();
             verifyHomePage();
             performLogout();
@@ -99,7 +99,7 @@ public class TestApp {
     @Description("This test verifies that a new lead can be created and verified.")
     public void testCreateNewLead() throws InterruptedException {
         synchronized (lock) {
-            performLogin("harshwsinha80-mhtl@force.com", "Harsh@73792610");
+            performLogin("harsh.wardhan-wtus@force.com", "Harsh@73792610");
             handleOTPVerification();
             navigateToLeadPage();
             createNewLead();
