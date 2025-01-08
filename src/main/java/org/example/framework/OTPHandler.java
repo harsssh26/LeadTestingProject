@@ -8,8 +8,8 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.nio.ByteBuffer;
-import java.security.NoSuchAlgorithmException;
 import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -112,11 +112,6 @@ public class OTPHandler {
             WebElement verifyButton = wait.until(ExpectedConditions.elementToBeClickable(
                     By.xpath("//input[@value='Verify' and @id='save']")));
             verifyButton.click();
-
-            logInfo("Waiting for server response...");
-            WebElement serverResponse = wait.until(ExpectedConditions.visibilityOfElementLocated(
-                    By.xpath("//div[@id='server-response']")));
-            logInfo("Server Response: " + serverResponse.getText());
 
         } catch (Exception e) {
             logError("Error during OTP entry and verification: " + e.getMessage());
