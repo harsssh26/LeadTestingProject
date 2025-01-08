@@ -22,6 +22,7 @@ public class OTPHandler {
     private static final String SECRET_KEY = "WAWJPHJTFQUBYN6PG2GBCEQKJK6TIBUC"; // Base32 encoded secret key
     private static final int OTP_PERIOD = 30; // Time step in seconds
     private static final String ALGORITHM = "HmacSHA1"; // Algorithm used for TOTP
+    private static final int TIME_STEP_WINDOW = 1; // Allow ±1 time step for clock drift tolerance
 
     public OTPHandler(WebDriver driver) {
         this.driver = driver;
@@ -58,46 +59,56 @@ public class OTPHandler {
 
     private String generateTOTP() {
         try {
-            // Decode Base32 secret key
             Base32 base32 = new Base32();
             byte[] secretKeyBytes = base32.decode(SECRET_KEY);
 
-            // Get current timestamp and calculate time step
+            // Get the current time and calculate the time step
             ZonedDateTime localTime = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
             long currentTimestamp = localTime.toInstant().getEpochSecond();
-            long timeStep = currentTimestamp / OTP_PERIOD;
 
-            logInfo("Adjusted Time (IST): " + localTime + " | Unix Timestamp: " + currentTimestamp);
-            logInfo("Time Step Index: " + timeStep);
+            // Iterate over the time step window to handle clock drift
+            for (int stepOffset = -TIME_STEP_WINDOW; stepOffset <= TIME_STEP_WINDOW; stepOffset++) {
+                long adjustedTimeStep = (currentTimestamp + (stepOffset * OTP_PERIOD)) / OTP_PERIOD;
 
-            // Convert time step to a big-endian byte array
-            ByteBuffer buffer = ByteBuffer.allocate(8);
-            buffer.putLong(timeStep);
-            byte[] timeBytes = buffer.array();
+                // Generate TOTP for the current adjusted time step
+                String otp = generateTOTPForTimeStep(secretKeyBytes, adjustedTimeStep);
+                logInfo("Generated OTP for stepOffset " + stepOffset + ": " + otp);
 
-            // Generate HMAC-SHA1 hash
-            SecretKeySpec keySpec = new SecretKeySpec(secretKeyBytes, ALGORITHM);
-            Mac mac = Mac.getInstance(ALGORITHM);
-            mac.init(keySpec);
-            byte[] hmacHash = mac.doFinal(timeBytes);
+                // Return the OTP for the middle (current) time step
+                if (stepOffset == 0) {
+                    return otp;
+                }
+            }
 
-            // Perform dynamic truncation to get a 31-bit integer from the hash
-            int offset = hmacHash[hmacHash.length - 1] & 0x0F;
-            int binaryCode = ((hmacHash[offset] & 0x7F) << 24) |
-                    ((hmacHash[offset + 1] & 0xFF) << 16) |
-                    ((hmacHash[offset + 2] & 0xFF) << 8) |
-                    (hmacHash[offset + 3] & 0xFF);
+            return null;
 
-            // Compute the TOTP value by taking modulo
-            int otp = binaryCode % (int) Math.pow(10, 6);
-
-            logInfo("Generated OTP: " + String.format("%06d", otp));
-            return String.format("%06d", otp);
-
-        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+        } catch (Exception e) {
             logError("Error while generating TOTP: " + e.getMessage());
             return null;
         }
+    }
+
+    private String generateTOTPForTimeStep(byte[] secretKeyBytes, long timeStep) throws NoSuchAlgorithmException, InvalidKeyException {
+        ByteBuffer buffer = ByteBuffer.allocate(8);
+        buffer.putLong(timeStep);
+        byte[] timeBytes = buffer.array();
+
+        // Generate HMAC-SHA1 hash
+        SecretKeySpec keySpec = new SecretKeySpec(secretKeyBytes, ALGORITHM);
+        Mac mac = Mac.getInstance(ALGORITHM);
+        mac.init(keySpec);
+        byte[] hmacHash = mac.doFinal(timeBytes);
+
+        // Perform dynamic truncation to get a 31-bit integer from the hash
+        int offset = hmacHash[hmacHash.length - 1] & 0x0F;
+        int binaryCode = ((hmacHash[offset] & 0x7F) << 24) |
+                ((hmacHash[offset + 1] & 0xFF) << 16) |
+                ((hmacHash[offset + 2] & 0xFF) << 8) |
+                (hmacHash[offset + 3] & 0xFF);
+
+        // Compute the TOTP value by taking modulo
+        int otp = binaryCode % (int) Math.pow(10, 6);
+        return String.format("%06d", otp);
     }
 
     private void enterOTPAndVerify(String otp) {
