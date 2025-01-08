@@ -9,7 +9,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import java.time.Duration;
 
 public class LoginPage {
-    private static final String VALID_USERNAME ="harsh.wardhan-wtus@force.com";
+    private static final String VALID_USERNAME ="harsh.wardhan-2ln5@force.com";
     private static final String VALID_PASSWORD ="Harsh@73792610";
 
     private final Utility utility;
