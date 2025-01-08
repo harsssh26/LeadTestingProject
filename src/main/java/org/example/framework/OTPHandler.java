@@ -1,5 +1,6 @@
 package org.example.framework;
 
+import org.apache.commons.codec.binary.Base32;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -13,12 +14,11 @@ import java.time.Duration;
 import java.time.Instant;
 
 import javax.crypto.spec.SecretKeySpec;
-import java.util.Base64;
 
 public class OTPHandler {
 
     private final WebDriver driver;
-    private static final String SECRET_KEY = "4TXCQHV5PK5J6FM2MDRAVFAZW3QTPO5T";
+    private static final String SECRET_KEY = "4TXCQHV5PK5J6FM2MDRAVFAZW3QTPO5T"; // Base32-encoded key
     private static final int OTP_PERIOD = 30; // Seconds
 
     public OTPHandler(WebDriver driver) {
@@ -56,10 +56,11 @@ public class OTPHandler {
 
     private String generateTOTP() {
         try {
-            // Decode the base32 secret key to bytes
-            byte[] secretKeyBytes = Base64.getDecoder().decode(SECRET_KEY);
+            // Decode the Base32 secret key
+            Base32 base32 = new Base32();
+            byte[] secretKeyBytes = base32.decode(SECRET_KEY);
 
-            // Create the TOTP generator with a 30-second time step
+            // Create a TOTP generator with a 30-second time step
             TimeBasedOneTimePasswordGenerator totpGenerator = new TimeBasedOneTimePasswordGenerator(Duration.ofSeconds(OTP_PERIOD));
 
             // Create the secret key for the TOTP generator
