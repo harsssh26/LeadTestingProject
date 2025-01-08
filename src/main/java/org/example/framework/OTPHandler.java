@@ -65,18 +65,20 @@ public class OTPHandler {
             logInfo("Entering OTP into the verification field...");
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
             WebElement otpField = wait.until(ExpectedConditions.visibilityOfElementLocated(
-                    By.xpath("//input[@id='emc']")));
+                    By.xpath("//input[@id='emc' and @name='emc']")));
             otpField.sendKeys(otp);
 
             logInfo("Clicking the Verify button...");
             WebElement verifyButton = wait.until(ExpectedConditions.elementToBeClickable(
-                    By.xpath("//input[@value='Verify' and @id='save']")));
+                    By.xpath("//input[@value='Verify' and @id='save' and @type='submit']")));
             verifyButton.click();
             logInfo("OTP entered and Verify button clicked.");
         } catch (Exception e) {
             logError("Error during OTP entry and verification: " + e.getMessage());
         }
     }
+    //inout[@value='Verify' and @id='save' and @type='submit']
+
 
     private void logInfo(String message) {
         System.out.println("[INFO] " + message);
