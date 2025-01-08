@@ -7,14 +7,13 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-import com.eatthepath.otp.TimeBasedOneTimePasswordGenerator;
-
-import java.security.Key;
+import java.nio.ByteBuffer;
+import java.security.NoSuchAlgorithmException;
+import java.security.InvalidKeyException;
 import java.time.Duration;
-import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-
+import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 public class OTPHandler {
@@ -59,39 +58,47 @@ public class OTPHandler {
 
     private String generateTOTP() {
         try {
+            // Decode Base32 secret key
             Base32 base32 = new Base32();
             byte[] secretKeyBytes = base32.decode(SECRET_KEY);
 
-            // Create the TOTP generator with the required time step
-            TimeBasedOneTimePasswordGenerator totpGenerator =
-                    new TimeBasedOneTimePasswordGenerator(Duration.ofSeconds(OTP_PERIOD));
-
-            // Use the correct algorithm in the SecretKeySpec
-            Key key = new SecretKeySpec(secretKeyBytes, "HmacSHA1"); // Use "HmacSHA256" or "HmacSHA512" if required
-
+            // Get current time and calculate time step
             ZonedDateTime localTime = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
-            Instant now = localTime.toInstant();
-            long timeStepForTOTP = now.getEpochSecond() / OTP_PERIOD;
+            long currentTimeSeconds = localTime.toInstant().getEpochSecond();
+            long timeStep = currentTimeSeconds / OTP_PERIOD;
 
-            // Log time details
-            //changes
-            logInfo("Adjusted Time (IST): " + localTime + " | Unix Timestamp: " + now.getEpochSecond());
-            logInfo("Time Step Index: " + timeStepForTOTP);
+            logInfo("Adjusted Time (IST): " + localTime + " | Unix Timestamp: " + currentTimeSeconds);
+            logInfo("Time Step Index: " + timeStep);
 
-            int otp = totpGenerator.generateOneTimePassword(key, now);
+            // Convert time step to byte array (big-endian)
+            ByteBuffer buffer = ByteBuffer.allocate(8);
+            buffer.putLong(timeStep);
+            byte[] timeBytes = buffer.array();
 
-            // Log generated OTP
+            // Create HMAC-SHA1 hash
+            SecretKeySpec keySpec = new SecretKeySpec(secretKeyBytes, ALGORITHM);
+            Mac mac = Mac.getInstance(ALGORITHM);
+            mac.init(keySpec);
+            byte[] hmacHash = mac.doFinal(timeBytes);
+
+            // Perform dynamic truncation to get a 4-byte binary code
+            int offset = hmacHash[hmacHash.length - 1] & 0x0F;
+            int binaryCode = ((hmacHash[offset] & 0x7F) << 24) |
+                    ((hmacHash[offset + 1] & 0xFF) << 16) |
+                    ((hmacHash[offset + 2] & 0xFF) << 8) |
+                    (hmacHash[offset + 3] & 0xFF);
+
+            // Compute TOTP
+            int otp = binaryCode % (int) Math.pow(10, 6);
             logInfo("Generated OTP: " + String.format("%06d", otp));
-
             return String.format("%06d", otp);
 
-        } catch (Exception e) {
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             logError("Error while generating TOTP: " + e.getMessage());
             return null;
         }
     }
 
-//changes
     private void enterOTPAndVerify(String otp) {
         try {
             logInfo("Entering OTP into the verification field...");
