@@ -63,12 +63,12 @@ public class OTPHandler {
             Base32 base32 = new Base32();
             byte[] secretKeyBytes = base32.decode(SECRET_KEY);
 
-            // Create a TOTP generator with a 30-second time step and the correct algorithm
+            // Create a TOTP generator with a 30-second time step
             TimeBasedOneTimePasswordGenerator totpGenerator =
-                    new TimeBasedOneTimePasswordGenerator(Duration.ofSeconds(OTP_PERIOD), TOTP_ALGORITHM);
+                    new TimeBasedOneTimePasswordGenerator(Duration.ofSeconds(OTP_PERIOD));
 
             // Create the secret key for the TOTP generator
-            Key key = new SecretKeySpec(secretKeyBytes, TOTP_ALGORITHM);
+            Key key = new SecretKeySpec(secretKeyBytes, totpGenerator.getAlgorithm());
 
             // Get the current time and adjust it to UTC+5:30
             ZonedDateTime localTime = Instant.now().atZone(ZoneId.of("UTC+05:30"));
@@ -87,6 +87,7 @@ public class OTPHandler {
             return null;
         }
     }
+
 
     private void enterOTPAndVerify(String otp) {
         try {
