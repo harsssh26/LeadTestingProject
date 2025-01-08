@@ -66,7 +66,7 @@ public class TestAutomationFramework {
                 return path;
             } catch (IOException e) {
                 System.err.println("Failed to save screenshot: " + e.getMessage());
-                e.printStackTrace();
+                e.printStackTrace();//change
             }
         } else {
             System.err.println("Driver does not support screenshots.");
