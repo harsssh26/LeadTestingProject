@@ -81,7 +81,6 @@ public class LoginPage {
     public void log_out() { // Logging out
         wait.until(ExpectedConditions.elementToBeClickable(profileIcon));
         utility.jsClick(profileIcon);
-
         wait.until(ExpectedConditions.elementToBeClickable(logoutButton));
         utility.jsClick(logoutButton);
     }
