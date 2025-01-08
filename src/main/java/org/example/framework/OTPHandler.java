@@ -90,7 +90,7 @@ public class OTPHandler {
         }
     }
 
-
+//changes
     private void enterOTPAndVerify(String otp) {
         try {
             logInfo("Entering OTP into the verification field...");
