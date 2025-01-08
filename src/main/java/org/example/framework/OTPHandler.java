@@ -19,14 +19,14 @@ public class OTPHandler {
 
     private final WebDriver driver;
     private static final String SECRET_KEY = "4TXCQHV5PK5J6FM2MDRAVFAZW3QTPO5T"; // Base32-encoded key
-    private static final int OTP_PERIOD = 30; // Seconds
+    private static final int OTP_PERIOD = 30;
 
     public OTPHandler(WebDriver driver) {
         this.driver = driver;
     }
 
     public void handleVerification() {
-        logInfo("Starting TOTP verification process...");
+        logInfo("Starting TOTP verification process...");//change
 
         if (isVerificationScreenDisplayed()) {
             logInfo("Verification screen detected.");
