@@ -4,7 +4,7 @@ import org.testng.ITestResult; // ITestResult provides details about the test re
 public class RetryAnalyzer implements IRetryAnalyzer // Here IRetryAnalyzer is a TestNG interface that allows defining retry logic for failed test cases
 {
     private int retryCount = 0;
-    private static final int maxRetryCount = 1;
+    private static final int maxRetryCount = 0;
 
     @Override
     public boolean retry(ITestResult result) {

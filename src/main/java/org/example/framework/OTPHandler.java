@@ -6,21 +6,20 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
+import com.eatthepath.otp.TimeBasedOneTimePasswordGenerator;
+
 import java.security.Key;
 import java.time.Duration;
-import java.util.Base64;
+import java.time.Instant;
 
-import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.util.Base64;
 
 public class OTPHandler {
 
     private final WebDriver driver;
     private static final String SECRET_KEY = "4TXCQHV5PK5J6FM2MDRAVFAZW3QTPO5T";
-    private static final int TIME_STEP_SECONDS = 30;
-    private static final int TOTP_LENGTH = 6;
+    private static final int OTP_PERIOD = 30; // Seconds
 
     public OTPHandler(WebDriver driver) {
         this.driver = driver;
@@ -57,30 +56,21 @@ public class OTPHandler {
 
     private String generateTOTP() {
         try {
-            byte[] key = Base64.getDecoder().decode(SECRET_KEY);
-            long timeStep = System.currentTimeMillis() / 1000 / TIME_STEP_SECONDS;
+            // Decode the base32 secret key to bytes
+            byte[] secretKeyBytes = Base64.getDecoder().decode(SECRET_KEY);
 
-            // Generate HMAC-SHA1 hash
-            ByteBuffer buffer = ByteBuffer.allocate(8);
-            buffer.putLong(timeStep);
-            byte[] timeBytes = buffer.array();
+            // Create the TOTP generator with a 30-second time step
+            TimeBasedOneTimePasswordGenerator totpGenerator = new TimeBasedOneTimePasswordGenerator(Duration.ofSeconds(OTP_PERIOD));
 
-            Mac mac = Mac.getInstance("HmacSHA1");
-            Key secretKeySpec = new SecretKeySpec(key, "HmacSHA1");
-            mac.init(secretKeySpec);
+            // Create the secret key for the TOTP generator
+            Key key = new SecretKeySpec(secretKeyBytes, totpGenerator.getAlgorithm());
 
-            byte[] hash = mac.doFinal(timeBytes);
+            // Generate the OTP for the current time
+            Instant now = Instant.now();
+            int otp = totpGenerator.generateOneTimePassword(key, now);
 
-            // Extract dynamic binary code
-            int offset = hash[hash.length - 1] & 0xF;
-            int binaryCode = ((hash[offset] & 0x7F) << 24) |
-                    ((hash[offset + 1] & 0xFF) << 16) |
-                    ((hash[offset + 2] & 0xFF) << 8) |
-                    (hash[offset + 3] & 0xFF);
-
-            // Generate TOTP
-            int otp = binaryCode % (int) Math.pow(10, TOTP_LENGTH);
-            return String.format("%0" + TOTP_LENGTH + "d", otp);
+            // Return the OTP as a zero-padded 6-digit string
+            return String.format("%06d", otp);
         } catch (Exception e) {
             logError("Error while generating TOTP: " + e.getMessage());
             return null;
