@@ -22,6 +22,7 @@ public class OTPHandler {
     private final WebDriver driver;
     private static final String SECRET_KEY = "4TXCQHV5PK5J6FM2MDRAVFAZW3QTPO5T"; // Base32-encoded key
     private static final int OTP_PERIOD = 30; // Seconds
+    private static final String TOTP_ALGORITHM = "HmacSHA1"; // Ensure this matches the server's algorithm
 
     public OTPHandler(WebDriver driver) {
         this.driver = driver;
@@ -62,11 +63,12 @@ public class OTPHandler {
             Base32 base32 = new Base32();
             byte[] secretKeyBytes = base32.decode(SECRET_KEY);
 
-            // Create a TOTP generator with a 30-second time step
-            TimeBasedOneTimePasswordGenerator totpGenerator = new TimeBasedOneTimePasswordGenerator(Duration.ofSeconds(OTP_PERIOD));
+            // Create a TOTP generator with a 30-second time step and the correct algorithm
+            TimeBasedOneTimePasswordGenerator totpGenerator =
+                    new TimeBasedOneTimePasswordGenerator(Duration.ofSeconds(OTP_PERIOD), TOTP_ALGORITHM);
 
             // Create the secret key for the TOTP generator
-            Key key = new SecretKeySpec(secretKeyBytes, totpGenerator.getAlgorithm());
+            Key key = new SecretKeySpec(secretKeyBytes, TOTP_ALGORITHM);
 
             // Get the current time and adjust it to UTC+5:30
             ZonedDateTime localTime = Instant.now().atZone(ZoneId.of("UTC+05:30"));
