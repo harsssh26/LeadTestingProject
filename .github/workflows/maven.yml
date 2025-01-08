@@ -25,18 +25,18 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-#      # Step to set the runner's timezone to IST (Indian Standard Time)
-#      - name: Set Timezone to IST
-#        run: |
-#          sudo timedatectl set-timezone Asia/Kolkata
-#          echo "Timezone set to IST (Indian Standard Time)"
-#          timedatectl
-#
-#      # Verify the timezone and print the current date and time in IST
-#      - name: Print Current Date and Time in IST
-#        run: |
-#          echo "Current Date and Time in IST:"
-#          date
+      # Step to set the runner's timezone to IST (Indian Standard Time)
+      - name: Set Timezone to IST
+        run: |
+          sudo timedatectl set-timezone Asia/Kolkata
+          echo "Timezone set to IST (Indian Standard Time)"
+          timedatectl
+
+      # Verify the timezone and print the current date and time in IST
+      - name: Print Current Date and Time in IST
+        run: |
+          echo "Current Date and Time in IST:"
+          date
 
       # Build the project using Maven
       - name: Build with Maven
