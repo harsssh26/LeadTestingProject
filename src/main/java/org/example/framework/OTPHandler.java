@@ -39,7 +39,7 @@ public class OTPHandler {
 
     private boolean isVerificationScreenDisplayed() {
         try {
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(25));
             wait.until(ExpectedConditions.visibilityOfElementLocated(
                     By.xpath("//h2[@id='header' and contains(text(), 'Verify Your Identity')]")));
             return true;
