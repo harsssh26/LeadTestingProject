@@ -13,7 +13,7 @@ import java.time.Duration;
 public class OTPHandler {
 
     private final WebDriver driver;
-    private static final String SECRET_KEY = "4TXCQHV5PK5J6FM2MDRAVFAZW3QTPO5T"; // Replace with your actual secret key
+    private static final String SECRET_KEY = "4TXCQHV5PK5J6FM2MDRAVFAZW3QTPO5T";
 
     public OTPHandler(WebDriver driver) {
         this.driver = driver;
@@ -24,7 +24,6 @@ public class OTPHandler {
 
         if (isVerificationScreenDisplayed()) {
             logInfo("Verification screen detected.");
-
             String otp = generateTOTP();
             if (otp != null) {
                 logInfo("TOTP generated successfully: " + otp);
@@ -52,8 +51,8 @@ public class OTPHandler {
     private String generateTOTP() {
         try {
             GoogleAuthenticator gAuth = new GoogleAuthenticator();
-            int otpCode = gAuth.getTotpPassword(SECRET_KEY); // Generate TOTP using the secret key
-            return String.valueOf(otpCode); // Convert OTP code to string for input
+            int otpCode = gAuth.getTotpPassword(SECRET_KEY);
+            return String.valueOf(otpCode);
         } catch (Exception e) {
             logError("Error while generating TOTP: " + e.getMessage());
             return null;
@@ -77,7 +76,6 @@ public class OTPHandler {
             logError("Error during OTP entry and verification: " + e.getMessage());
         }
     }
-    //inout[@value='Verify' and @id='save' and @type='submit']
 
 
     private void logInfo(String message) {
