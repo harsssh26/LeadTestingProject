@@ -70,12 +70,12 @@ public class OTPHandler {
             // Create the secret key for the TOTP generator
             Key key = new SecretKeySpec(secretKeyBytes, totpGenerator.getAlgorithm());
 
-            // Get the current time and adjust it to UTC+5:30
-            ZonedDateTime localTime = Instant.now().atZone(ZoneId.of("UTC+05:30"));
+            // Get the current time in IST
+            ZonedDateTime localTime = ZonedDateTime.now(ZoneId.of("Asia/Kolkata")); // Adjust to IST
             Instant adjustedTime = localTime.toInstant();
 
             // Log the adjusted time for debugging
-            logInfo("Adjusted Time (UTC+5:30): " + adjustedTime);
+            logInfo("Adjusted Time (IST): " + localTime);
 
             // Generate the OTP for the adjusted time
             int otp = totpGenerator.generateOneTimePassword(key, adjustedTime);
@@ -87,6 +87,7 @@ public class OTPHandler {
             return null;
         }
     }
+
 
 
     private void enterOTPAndVerify(String otp) {
