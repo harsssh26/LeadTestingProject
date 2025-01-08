@@ -21,7 +21,7 @@ public class OTPHandler {
 
     private final WebDriver driver;
     private static final String SECRET_KEY = "4TXCQHV5PK5J6FM2MDRAVFAZW3QTPO5T"; // Base32-encoded key
-    private static final int OTP_PERIOD = 30;
+    private static final int OTP_PERIOD = 30; // Seconds
 
     public OTPHandler(WebDriver driver) {
         this.driver = driver;
@@ -48,7 +48,7 @@ public class OTPHandler {
         try {
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(25));
             wait.until(ExpectedConditions.visibilityOfElementLocated(
-                    By.xpath("//h2[contains(text(), 'Verify Your Identity')]"))); // Simplified XPath
+                    By.xpath("//h2[@id='header' and contains(text(), 'Verify Your Identity')]")));
             return true;
         } catch (Exception e) {
             logInfo("Verification screen not displayed: " + e.getMessage());
@@ -68,7 +68,7 @@ public class OTPHandler {
             // Create the secret key for the TOTP generator
             Key key = new SecretKeySpec(secretKeyBytes, totpGenerator.getAlgorithm());
 
-            // Adjust the time for the local time zone (UTC+5:30)
+            // Get the current time and adjust it to UTC+5:30
             ZonedDateTime localTime = Instant.now().atZone(ZoneId.of("UTC+05:30"));
             Instant adjustedTime = localTime.toInstant();
 
@@ -94,6 +94,7 @@ public class OTPHandler {
                     By.xpath("//input[@id='emc']")));
             otpField.sendKeys(otp);
 
+            logInfo("Clicking the Verify button...");
             WebElement verifyButton = wait.until(ExpectedConditions.elementToBeClickable(
                     By.xpath("//input[@value='Verify' and @id='save']")));
             verifyButton.click();
