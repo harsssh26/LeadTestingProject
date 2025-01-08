@@ -41,7 +41,7 @@ public class TestApp {
         synchronized (lock) {
             driver = TestAutomationFramework.getDriver();
 
-            TestAutomationFramework.openUrl("https://velocity-velocity-11082.my.salesforce.com");
+            TestAutomationFramework.openUrl("https://inspiration-ruby-4894.lightning.force.com/lightning/page/home");
             Thread.sleep(2000);
             loginPage = new LoginPage(driver);
             leadPage = new LeadPage(driver);
