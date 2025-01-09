@@ -85,4 +85,3 @@ public class LoginPage {
         utility.jsClick(logoutButton);
     }
 }
-//changes
