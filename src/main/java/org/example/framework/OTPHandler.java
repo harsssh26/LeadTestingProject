@@ -19,10 +19,9 @@ import javax.crypto.spec.SecretKeySpec;
 public class OTPHandler {
 
     private final WebDriver driver;
-    private static final String SECRET_KEY = "WAWJPHJTFQUBYN6PG2GBCEQKJK6TIBUC"; // Base32 encoded secret key
+    private static final String SECRET_KEY = "FPQ4OYOXBE37UU7B3MM42LYRNRJ4PTUP"; // Base32 encoded secret key
     private static final int OTP_PERIOD = 30; // Time step in seconds
     private static final String ALGORITHM = "HmacSHA1"; // Algorithm used for TOTP
-    private static final int TIME_STEP_WINDOW = 1; // Allow ±1 time step for clock drift tolerance
 
     public OTPHandler(WebDriver driver) {
         this.driver = driver;
@@ -33,13 +32,7 @@ public class OTPHandler {
 
         if (isVerificationScreenDisplayed()) {
             logInfo("Verification screen detected.");
-            String otp = generateTOTP();
-            if (otp != null) {
-                logInfo("TOTP generated successfully: " + otp);
-                enterOTPAndVerify(otp);
-            } else {
-                logError("Failed to generate TOTP. Verification aborted.");
-            }
+            enterOTPAndVerify(); // Generate and enter TOTP just before submission
         } else {
             logInfo("Verification screen not detected. Skipping OTP process.");
         }
@@ -57,30 +50,44 @@ public class OTPHandler {
         }
     }
 
+    private void enterOTPAndVerify() {
+        try {
+            logInfo("Generating TOTP just before submission...");
+            long generationTimestamp = System.currentTimeMillis() / 1000;
+            String otp = generateTOTP();
+            logInfo("TOTP generated: " + otp);
+            logInfo("TOTP generated at: " + generationTimestamp + " seconds since epoch");
+
+            logInfo("Entering OTP into the verification field...");
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
+
+            WebElement otpField = wait.until(ExpectedConditions.visibilityOfElementLocated(
+                    By.xpath("//input[@id='tc']")));
+            otpField.sendKeys(otp);
+
+            logInfo("Clicking the Verify button...");
+            WebElement verifyButton = wait.until(ExpectedConditions.elementToBeClickable(
+                    By.xpath("//input[@value='Verify' and @id='save']")));
+            verifyButton.click();
+
+            logInfo("OTP submitted at: " + System.currentTimeMillis() / 1000 + " seconds since epoch");
+
+        } catch (Exception e) {
+            logError("Error during OTP entry and verification: " + e.getMessage());
+        }
+    }
+
     private String generateTOTP() {
         try {
             Base32 base32 = new Base32();
             byte[] secretKeyBytes = base32.decode(SECRET_KEY);
 
-            // Get the current time and calculate the time step
+            // Get current timestamp and calculate time step
             ZonedDateTime localTime = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
             long currentTimestamp = localTime.toInstant().getEpochSecond();
+            long timeStep = currentTimestamp / OTP_PERIOD;
 
-            // Iterate over the time step window to handle clock drift
-            for (int stepOffset = -TIME_STEP_WINDOW; stepOffset <= TIME_STEP_WINDOW; stepOffset++) {
-                long adjustedTimeStep = (currentTimestamp + (stepOffset * OTP_PERIOD)) / OTP_PERIOD;
-
-                // Generate TOTP for the current adjusted time step
-                String otp = generateTOTPForTimeStep(secretKeyBytes, adjustedTimeStep);
-                logInfo("Generated OTP for stepOffset " + stepOffset + ": " + otp);
-
-                // Return the OTP for the middle (current) time step
-                if (stepOffset == 0) {
-                    return otp;
-                }
-            }
-
-            return null;
+            return generateTOTPForTimeStep(secretKeyBytes, timeStep);
 
         } catch (Exception e) {
             logError("Error while generating TOTP: " + e.getMessage());
@@ -109,26 +116,6 @@ public class OTPHandler {
         // Compute the TOTP value by taking modulo
         int otp = binaryCode % (int) Math.pow(10, 6);
         return String.format("%06d", otp);
-    }
-
-    private void enterOTPAndVerify(String otp) {
-        try {
-            logInfo("Entering OTP into the verification field...");
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
-
-            WebElement otpField = wait.until(ExpectedConditions.visibilityOfElementLocated(
-                    By.xpath("//input[@id='emc']")));
-            otpField.sendKeys(otp);
-
-            logInfo("Clicking the Verify button...");
-            WebElement verifyButton = wait.until(ExpectedConditions.elementToBeClickable(
-                    By.xpath("//input[@value='Verify' and @id='save']")));
-            verifyButton.click();
-
-            logInfo("Verification process completed.");
-        } catch (Exception e) {
-            logError("Error during OTP entry and verification: " + e.getMessage());
-        }
     }
 
     private void logInfo(String message) {

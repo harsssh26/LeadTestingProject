@@ -41,7 +41,7 @@ public class TestApp {
         synchronized (lock) {
             driver = TestAutomationFramework.getDriver();
 
-            TestAutomationFramework.openUrl("https://agility-ruby-2662.my.salesforce.com");
+            TestAutomationFramework.openUrl("https://login.salesforce.com/");
             Thread.sleep(2000);
             loginPage = new LoginPage(driver);
             leadPage = new LeadPage(driver);
